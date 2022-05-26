@@ -18,6 +18,8 @@ var (
 	pubRegexp01 = regexp.MustCompile(`([^;]*); (\d+)(st|nd|rd|th)([^(]+)\((\w+) (\d+), (\d+)\)`)
 	// No Starch Press (November 5, 2020)
 	pubRegexp02 = regexp.MustCompile(`(^[A-Z][^(;]+) \((\w+) (\d+), (\d+)\)`)
+	// 522 pages
+	lengthRegex = regexp.MustCompile(`(^\d+) pages`)
 )
 
 // ParseTitleString parses a book title string and returns separate title and subtitle strings.
@@ -107,4 +109,15 @@ func ParseEditionString(editionString string) (uint8, error) {
 	}
 
 	return 0, nil
+}
+
+// ParseLengthString parses a book length string and returns its numeric value.
+func ParseLengthString(lengthString string) uint16 {
+	subMatch := lengthRegex.FindStringSubmatch(lengthString)
+	if subMatch != nil {
+		bookLength, _ := strconv.Atoi(subMatch[1])
+		return uint16(bookLength)
+	}
+
+	return 0
 }
