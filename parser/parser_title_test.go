@@ -4,65 +4,60 @@ import (
 	"testing"
 )
 
-const (
-	succeed = "\u2713"
-	failed  = "\u2717"
-)
-
 func TestParseTitle(t *testing.T) {
 	tests := []struct {
 		input    string
 		title    string
-		subTitle string
+		subtitle string
 	}{
 		{
 			input:    "Hands-on Kubernetes on Azure: Use Azure Kubernetes Service to automate management, scaling, and deployment of containerized applications, 3rd Edition",
 			title:    "Hands-on Kubernetes on Azure",
-			subTitle: "Use Azure Kubernetes Service to automate management, scaling, and deployment of containerized applications",
+			subtitle: "Use Azure Kubernetes Service to automate management, scaling, and deployment of containerized applications",
 		},
 		{
 			input:    "Real-World Python: A Hacker's Guide to Solving Problems with Code",
 			title:    "Real-World Python",
-			subTitle: "A Hacker's Guide to Solving Problems with Code",
+			subtitle: "A Hacker's Guide to Solving Problems with Code",
 		},
 		{
 			input:    "Kubernetes in Action",
 			title:    "Kubernetes in Action",
-			subTitle: "",
+			subtitle: "",
 		},
 		{
 			input:    "Kubernetes in Action, Second Edition",
 			title:    "Kubernetes in Action",
-			subTitle: "",
+			subtitle: "",
 		},
 		{
 			input:    "The Official BBC micro:bit User Guide",
 			title:    "The Official BBC micro:bit User Guide",
-			subTitle: "",
+			subtitle: "",
 		},
 		{
 			input:    "The Pragmatic Programmer: Your Journey To Mastery, 20th Anniversary Edition (2nd Edition)",
 			title:    "The Pragmatic Programmer",
-			subTitle: "Your Journey To Mastery, 20th Anniversary Edition",
+			subtitle: "Your Journey To Mastery, 20th Anniversary Edition",
 		},
 		{
 			input:    "Python Crash Course, 2nd Edition: A Hands-On, Project-Based Introduction to Programming",
 			title:    "Python Crash Course",
-			subTitle: "A Hands-On, Project-Based Introduction to Programming",
+			subtitle: "A Hands-On, Project-Based Introduction to Programming",
 		},
 	}
 
 	t.Log("Given the need to test title string parsing.")
 	for i, tt := range tests {
-		t.Logf("\tTest: %d\tWhen checking %q for title %q and subTitle %q\n", i, tt.input, tt.title, tt.subTitle)
-		title, subTitle := ParseTitle(tt.input)
+		t.Logf("\tTest: %d\tWhen checking %q for title %q and subtitle %q\n", i, tt.input, tt.title, tt.subtitle)
+		title, subtitle := ParseTitleString(tt.input)
 		if title != tt.title {
 			t.Errorf("\t\t%s\tShould get a %q title: %v", failed, tt.title, title)
 		}
 		t.Logf("\t\t%s\tShould be able to get correct title.", succeed)
-		if subTitle != tt.subTitle {
-			t.Errorf("\t\t%s\tShould get a %q subTitle: %v", failed, tt.subTitle, subTitle)
+		if subtitle != tt.subtitle {
+			t.Errorf("\t\t%s\tShould get a %q subtitle: %v", failed, tt.subtitle, subtitle)
 		}
-		t.Logf("\t\t%s\tShould be able to get correct subTitle.", succeed)
+		t.Logf("\t\t%s\tShould be able to get correct subtitle.", succeed)
 	}
 }

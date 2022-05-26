@@ -4,7 +4,7 @@ import "time"
 
 type BookMeta struct {
 	Title         string
-	SubTitle      string
+	Subtitle      string
 	Description   string
 	ISBN10        string
 	ISBN13        string
