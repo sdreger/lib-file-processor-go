@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestParseTitle(t *testing.T) {
+func TestParseTitleString(t *testing.T) {
 	tests := []struct {
 		input    string
 		title    string
@@ -53,11 +53,13 @@ func TestParseTitle(t *testing.T) {
 		title, subtitle := ParseTitleString(tt.input)
 		if title != tt.title {
 			t.Errorf("\t\t%s\tShould get a %q title: %v", failed, tt.title, title)
+		} else {
+			t.Logf("\t\t%s\tShould be able to get correct title.", succeed)
 		}
-		t.Logf("\t\t%s\tShould be able to get correct title.", succeed)
 		if subtitle != tt.subtitle {
 			t.Errorf("\t\t%s\tShould get a %q subtitle: %v", failed, tt.subtitle, subtitle)
+		} else {
+			t.Logf("\t\t%s\tShould be able to get correct subtitle.", succeed)
 		}
-		t.Logf("\t\t%s\tShould be able to get correct subtitle.", succeed)
 	}
 }

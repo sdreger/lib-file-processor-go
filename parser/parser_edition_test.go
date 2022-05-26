@@ -4,10 +4,11 @@ import (
 	"testing"
 )
 
-func TestParseEdition(t *testing.T) {
+func TestParseEditionString(t *testing.T) {
 	tests := []struct {
-		input   string
-		edition uint8
+		input             string
+		edition           uint8
+		shouldReturnError bool
 	}{
 		{
 			input:   "Hands-on Kubernetes on Azure: Use Azure Kubernetes Service to automate management, scaling, and deployment of containerized applications, 3rd Edition",
@@ -37,18 +38,24 @@ func TestParseEdition(t *testing.T) {
 			input:   "Python Crash Course, 2nd Edition: A Hands-On, Project-Based Introduction to Programming",
 			edition: 2,
 		},
+		{
+			input:             "Unknown Edition",
+			edition:           0,
+			shouldReturnError: true,
+		},
 	}
 
 	t.Log("Given the need to test edition string parsing.")
 	for i, tt := range tests {
 		t.Logf("\tTest: %d\tWhen checking %q for edition %d\n", i, tt.input, tt.edition)
 		edition, err := ParseEditionString(tt.input)
-		if err != nil {
+		if !tt.shouldReturnError && err != nil {
 			t.Fatalf("\t\t%s\tShould be able to get edition value: %v", failed, err)
 		}
 		if edition != tt.edition {
 			t.Errorf("\t\t%s\tShould get a %d edition: %d", failed, tt.edition, edition)
+		} else {
+			t.Logf("\t\t%s\tShould be able to get correct edition value.", succeed)
 		}
-		t.Logf("\t\t%s\tShould be able to get correct edition value.", succeed)
 	}
 }
