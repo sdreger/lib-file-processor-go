@@ -15,9 +15,13 @@ var (
 	// Second Edition / Fifth Edition
 	editionOrdinalRegex = regexp.MustCompile(`(?i),? ?\(?([a-zA-Z]{3,}) (Edition)\)?`)
 	// Apress; 1st ed. edition (November 1, 2020) / Wiley; 1st edition (October 16, 2017)
-	pubRegexp01 = regexp.MustCompile(`([^;]*); (\d+)(st|nd|rd|th)([^(]+)\((\w+) (\d+), (\d+)\)`)
+	pubRegexp01 = regexp.MustCompile(`(^[A-Z][^;]+); (\d+)(st|nd|rd|th)([^(]+)\((\w+) (\d+), (\d+)\)`)
 	// No Starch Press (November 5, 2020)
 	pubRegexp02 = regexp.MustCompile(`(^[A-Z][^(;]+) \((\w+) (\d+), (\d+)\)`)
+	// Packt Publishing; 3rd edition (17 May 2021)
+	pubRegexp03 = regexp.MustCompile(`(^[A-Z][^;]+); (\d+)(st|nd|rd|th)([^(]+)\((\d+) (\w+)\.? (\d+)\)`)
+	// No Starch Press (1 Oct. 2020)
+	pubRegexp04 = regexp.MustCompile(`(^[A-Z][^(;]+) \((\d+) (\w+)\.? (\d+)\)`)
 	// 522 pages
 	lengthRegex = regexp.MustCompile(`(^\d+) pages`)
 )
@@ -55,8 +59,9 @@ func ParsePublisherString(publisherString string) (BookPublishMeta, error) {
 	var day int
 	var month string
 	var year int
+
+	// US format 1
 	subMatch := pubRegexp01.FindStringSubmatch(publisherString)
-	// No need to check for the 'Atoi' conversion errors, regex subMatch will always give the numeric value
 	if len(subMatch) == 8 {
 		publisher = subMatch[1]
 		edition, _ = strconv.Atoi(subMatch[2])
@@ -65,6 +70,7 @@ func ParsePublisherString(publisherString string) (BookPublishMeta, error) {
 		year, _ = strconv.Atoi(subMatch[7])
 	}
 
+	// US format 2
 	subMatch = pubRegexp02.FindStringSubmatch(publisherString)
 	if len(subMatch) == 5 {
 		publisher = subMatch[1]
@@ -73,11 +79,30 @@ func ParsePublisherString(publisherString string) (BookPublishMeta, error) {
 		year, _ = strconv.Atoi(subMatch[4])
 	}
 
+	// EU format 1
+	subMatch = pubRegexp03.FindStringSubmatch(publisherString)
+	if len(subMatch) == 8 {
+		publisher = subMatch[1]
+		edition, _ = strconv.Atoi(subMatch[2])
+		day, _ = strconv.Atoi(subMatch[5])
+		month = subMatch[6]
+		year, _ = strconv.Atoi(subMatch[7])
+	}
+
+	// EU format 2
+	subMatch = pubRegexp04.FindStringSubmatch(publisherString)
+	if len(subMatch) == 5 {
+		publisher = subMatch[1]
+		day, _ = strconv.Atoi(subMatch[2])
+		month = subMatch[3]
+		year, _ = strconv.Atoi(subMatch[4])
+	}
+
 	if publisher == "" {
 		return BookPublishMeta{}, fmt.Errorf("the publisher string '%s' can not be parsed", publisherString)
 	}
 
-	monthVal, err := time.Parse("January", month)
+	monthVal, err := time.Parse("Jan", month[:3])
 	if err != nil {
 		return BookPublishMeta{}, err
 	}

@@ -44,6 +44,38 @@ func TestParsePublisherString(t *testing.T) {
 			},
 		},
 		{
+			input: "Packt Publishing; 3rd edition (17 May 2021)",
+			meta: BookPublishMeta{
+				Publisher: "Packt Publishing",
+				Edition:   3,
+				PubDate:   time.Date(2021, 5, 17, 0, 0, 0, 0, time.UTC),
+			},
+		},
+		{
+			input: "Pearson; 3rd edition (2 Jun. 2022)",
+			meta: BookPublishMeta{
+				Publisher: "Pearson",
+				Edition:   3,
+				PubDate:   time.Date(2022, 6, 2, 0, 0, 0, 0, time.UTC),
+			},
+		},
+		{
+			input: "No Starch Press (25 May 2019)",
+			meta: BookPublishMeta{
+				Publisher: "No Starch Press",
+				Edition:   1,
+				PubDate:   time.Date(2019, 5, 25, 0, 0, 0, 0, time.UTC),
+			},
+		},
+		{
+			input: "No Starch Press (1 Oct. 2020)",
+			meta: BookPublishMeta{
+				Publisher: "No Starch Press",
+				Edition:   1,
+				PubDate:   time.Date(2020, 10, 1, 0, 0, 0, 0, time.UTC),
+			},
+		},
+		{
 			input:             "Unknown; 2nd edition (Unknown 15, 2021)",
 			meta:              BookPublishMeta{},
 			shouldReturnError: true,
