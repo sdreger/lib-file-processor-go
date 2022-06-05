@@ -15,11 +15,11 @@ var (
 	// Second Edition / Fifth Edition
 	editionOrdinalRegex = regexp.MustCompile(`(?i),? ?\(?([a-zA-Z]{3,}) (Edition)\)?`)
 	// Apress; 1st ed. edition (November 1, 2020) / Wiley; 1st edition (October 16, 2017)
-	pubRegexp01 = regexp.MustCompile(`(^[A-Z][^;]+); (\d+)(st|nd|rd|th)([^(]+)\((\w+) (\d+), (\d+)\)`)
+	pubRegexp01 = regexp.MustCompile(`(^[A-Z][^;]+); ((\d+)(st|nd|rd|th))?([^(]+)\((\w+) (\d+), (\d+)\)`)
 	// No Starch Press (November 5, 2020)
 	pubRegexp02 = regexp.MustCompile(`(^[A-Z][^(;]+) \((\w+) (\d+), (\d+)\)`)
 	// Packt Publishing; 3rd edition (17 May 2021)
-	pubRegexp03 = regexp.MustCompile(`(^[A-Z][^;]+); (\d+)(st|nd|rd|th)([^(]+)\((\d+) (\w+)\.? (\d+)\)`)
+	pubRegexp03 = regexp.MustCompile(`(^[A-Z][^;]+); ((\d+)(st|nd|rd|th))?([^(]+)\((\d+) (\w+)\.? (\d+)\)`)
 	// No Starch Press (1 Oct. 2020)
 	pubRegexp04 = regexp.MustCompile(`(^[A-Z][^(;]+) \((\d+) (\w+)\.? (\d+)\)`)
 	// 522 pages
@@ -62,12 +62,14 @@ func ParsePublisherString(publisherString string) (BookPublishMeta, error) {
 
 	// US format 1
 	subMatch := pubRegexp01.FindStringSubmatch(publisherString)
-	if len(subMatch) == 8 {
+	if len(subMatch) == 9 {
 		publisher = subMatch[1]
-		edition, _ = strconv.Atoi(subMatch[2])
-		month = subMatch[5]
-		day, _ = strconv.Atoi(subMatch[6])
-		year, _ = strconv.Atoi(subMatch[7])
+		if subMatch[3] != "" {
+			edition, _ = strconv.Atoi(subMatch[3])
+		}
+		month = subMatch[6]
+		day, _ = strconv.Atoi(subMatch[7])
+		year, _ = strconv.Atoi(subMatch[8])
 	}
 
 	// US format 2
@@ -81,12 +83,14 @@ func ParsePublisherString(publisherString string) (BookPublishMeta, error) {
 
 	// EU format 1
 	subMatch = pubRegexp03.FindStringSubmatch(publisherString)
-	if len(subMatch) == 8 {
+	if len(subMatch) == 9 {
 		publisher = subMatch[1]
-		edition, _ = strconv.Atoi(subMatch[2])
-		day, _ = strconv.Atoi(subMatch[5])
-		month = subMatch[6]
-		year, _ = strconv.Atoi(subMatch[7])
+		if subMatch[3] != "" {
+			edition, _ = strconv.Atoi(subMatch[3])
+		}
+		day, _ = strconv.Atoi(subMatch[6])
+		month = subMatch[7]
+		year, _ = strconv.Atoi(subMatch[8])
 	}
 
 	// EU format 2

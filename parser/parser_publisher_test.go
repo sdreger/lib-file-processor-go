@@ -76,6 +76,22 @@ func TestParsePublisherString(t *testing.T) {
 			},
 		},
 		{
+			input: "DK Children; Workbook edition (March 7, 2017)",
+			meta: BookPublishMeta{
+				Publisher: "DK Children",
+				Edition:   1,
+				PubDate:   time.Date(2017, 3, 7, 0, 0, 0, 0, time.UTC),
+			},
+		},
+		{
+			input: "DK Publishing (Dorling Kindersley); Workbook edition (7 Mar. 2017)",
+			meta: BookPublishMeta{
+				Publisher: "DK Publishing (Dorling Kindersley)",
+				Edition:   1,
+				PubDate:   time.Date(2017, 3, 7, 0, 0, 0, 0, time.UTC),
+			},
+		},
+		{
 			input:             "Unknown; 2nd edition (Unknown 15, 2021)",
 			meta:              BookPublishMeta{},
 			shouldReturnError: true,
