@@ -18,10 +18,14 @@ var (
 	pubRegexp01 = regexp.MustCompile(`(^[A-Z][^;]+); ((\d+)(st|nd|rd|th))?([^(]+)\((\w+) (\d+), (\d+)\)`)
 	// No Starch Press (November 5, 2020)
 	pubRegexp02 = regexp.MustCompile(`(^[A-Z][^(;]+) \((\w+) (\d+), (\d+)\)`)
+	// Esri Press; Fourth edition (December 28, 2021) / Esri Press; Fourth Bilingual edition (December 28, 2021)
+	pubRegexp03 = regexp.MustCompile(`(?i)(^[A-Z][^(;]+); ([a-z-A-Z]+(st|nd|rd|th)) ?\w* edition \((\w+) (\d+), (\d+)\)`)
 	// Packt Publishing; 3rd edition (17 May 2021)
-	pubRegexp03 = regexp.MustCompile(`(^[A-Z][^;]+); ((\d+)(st|nd|rd|th))?([^(]+)\((\d+) (\w+)\.? (\d+)\)`)
+	pubRegexp04 = regexp.MustCompile(`(^[A-Z][^;]+); ((\d+)(st|nd|rd|th))?([^(]+)\((\d+) (\w+)\.? (\d+)\)`)
 	// No Starch Press (1 Oct. 2020)
-	pubRegexp04 = regexp.MustCompile(`(^[A-Z][^(;]+) \((\d+) (\w+)\.? (\d+)\)`)
+	pubRegexp05 = regexp.MustCompile(`(^[A-Z][^(;]+) \((\d+) (\w+)\.? (\d+)\)`)
+	// Esri Press; Fourth edition (10 Feb. 2022) / Esri Press; Fourth Bilingual edition (10 Feb. 2022)
+	pubRegexp06 = regexp.MustCompile(`(?i)(^[A-Z][^(;]+); ([a-z-A-Z]+(st|nd|rd|th)) ?\w* edition \((\d+) (\w+)\.? (\d+)\)`)
 	// 522 pages
 	lengthRegex = regexp.MustCompile(`(^\d+) pages`)
 )
@@ -87,8 +91,23 @@ func ParsePublisherString(publisherString string) (BookPublishMeta, error) {
 		year, _ = strconv.Atoi(subMatch[4])
 	}
 
-	// EU format 1
+	// US format 3
 	subMatch = pubRegexp03.FindStringSubmatch(publisherString)
+	if len(subMatch) == 7 {
+		publisher = subMatch[1]
+		if subMatch[2] != "" {
+			ed, err := wordnumber.OrdinalToInt(subMatch[2])
+			if err == nil {
+				edition = ed
+			}
+		}
+		month = subMatch[4]
+		day, _ = strconv.Atoi(subMatch[5])
+		year, _ = strconv.Atoi(subMatch[6])
+	}
+
+	// EU format 1
+	subMatch = pubRegexp04.FindStringSubmatch(publisherString)
 	if len(subMatch) == 9 {
 		publisher = subMatch[1]
 		if subMatch[3] != "" {
@@ -100,12 +119,27 @@ func ParsePublisherString(publisherString string) (BookPublishMeta, error) {
 	}
 
 	// EU format 2
-	subMatch = pubRegexp04.FindStringSubmatch(publisherString)
+	subMatch = pubRegexp05.FindStringSubmatch(publisherString)
 	if len(subMatch) == 5 {
 		publisher = subMatch[1]
 		day, _ = strconv.Atoi(subMatch[2])
 		month = subMatch[3]
 		year, _ = strconv.Atoi(subMatch[4])
+	}
+
+	// EU format 3
+	subMatch = pubRegexp06.FindStringSubmatch(publisherString)
+	if len(subMatch) == 7 {
+		publisher = subMatch[1]
+		if subMatch[2] != "" {
+			ed, err := wordnumber.OrdinalToInt(subMatch[2])
+			if err == nil {
+				edition = ed
+			}
+		}
+		day, _ = strconv.Atoi(subMatch[4])
+		month = subMatch[5]
+		year, _ = strconv.Atoi(subMatch[6])
 	}
 
 	if publisher == "" {

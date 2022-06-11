@@ -92,6 +92,22 @@ func TestParsePublisherString(t *testing.T) {
 			},
 		},
 		{
+			input: "Esri Press; Fourth edition (December 28, 2021)",
+			meta: BookPublishMeta{
+				Publisher: "Esri Press",
+				Edition:   4,
+				PubDate:   time.Date(2021, 12, 28, 0, 0, 0, 0, time.UTC),
+			},
+		},
+		{
+			input: "Esri Press; Fourth edition (10 Feb. 2022)",
+			meta: BookPublishMeta{
+				Publisher: "Esri Press",
+				Edition:   4,
+				PubDate:   time.Date(2022, 2, 10, 0, 0, 0, 0, time.UTC),
+			},
+		},
+		{
 			input:             "Unknown; 2nd edition (Unknown 15, 2021)",
 			meta:              BookPublishMeta{},
 			shouldReturnError: true,
@@ -111,7 +127,7 @@ func TestParsePublisherString(t *testing.T) {
 			t.Fatalf("\t\t%s\tShould be able to parse publisher string: %v", failed, err)
 		}
 		if meta != tt.meta {
-			t.Errorf("\t\t%s\tShould get a %v publisher metadata: %v", failed, meta, tt.meta)
+			t.Errorf("\t\t%s\tShould get a %v publisher metadata: %v", failed, tt.meta, meta)
 		} else {
 			t.Logf("\t\t%s\tShould be able to get correct publisher metadata.", succeed)
 		}
