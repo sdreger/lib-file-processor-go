@@ -46,6 +46,12 @@ func ParseTitleString(titleString string) (string, string) {
 	// Extract 'titleString' and 'subtitle' values
 	lastColonIndex := strings.LastIndex(titleString, ": ")
 	if lastColonIndex == -1 {
+		// If there is no colon in the title string, try to extract the part in parentheses into subtitle string
+		parenthesisStartIndex := strings.Index(titleString, "(")
+		parenthesisEndIndex := strings.LastIndex(titleString, ")")
+		if parenthesisStartIndex != -1 && parenthesisEndIndex == len(titleString)-1 {
+			return titleString[:parenthesisStartIndex-1], titleString[parenthesisStartIndex:]
+		}
 		return titleString, ""
 	}
 

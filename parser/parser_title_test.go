@@ -45,6 +45,26 @@ func TestParseTitleString(t *testing.T) {
 			title:    "Python Crash Course",
 			subtitle: "A Hands-On, Project-Based Introduction to Programming",
 		},
+		{
+			input:    "Natural Language Processing: Third Edition (Lectures on Human Language Technologies)",
+			title:    "Natural Language Processing",
+			subtitle: "(Lectures on Human Language Technologies)",
+		},
+		{
+			input:    "Introduction to Graph Neural Networks (Synthesis Lectures on AI and Machine Learning)",
+			title:    "Introduction to Graph Neural Networks",
+			subtitle: "(Synthesis Lectures on AI and Machine Learning)",
+		},
+		{
+			input:    "Beginning Programming All-in-One For Dummies (For Dummies (Computer/Tech))",
+			title:    "Beginning Programming All-in-One For Dummies",
+			subtitle: "(For Dummies (Computer/Tech))",
+		},
+		{
+			input:    "Blockchain Technology III (Computer Science, Technology) (Blockchain Technology, 3)",
+			title:    "Blockchain Technology III",
+			subtitle: "(Computer Science, Technology) (Blockchain Technology, 3)",
+		},
 	}
 
 	t.Log("Given the need to test title string parsing.")
