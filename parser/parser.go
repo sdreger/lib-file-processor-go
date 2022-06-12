@@ -9,23 +9,29 @@ import (
 	"time"
 )
 
+const (
+	dateLayout01 = "January 2, 2006"
+	dateLayout02 = "2 Jan. 2006"
+	dateLayout03 = "2 Jan 2006"
+)
+
 var (
 	// 1st Edition / 5th Edition
 	editionCardinalRegex = regexp.MustCompile(`(?i),? ?\(?(\d+)(st|nd|rd|th) (Edition)\)?`)
 	// Second Edition / Fifth Edition
 	editionOrdinalRegex = regexp.MustCompile(`(?i),? ?\(?([a-zA-Z]{3,}) (Edition)\)?`)
 	// Apress; 1st ed. edition (November 1, 2020) / Wiley; 1st edition (October 16, 2017)
-	pubRegexp01 = regexp.MustCompile(`(^[A-Z][^;]+); ((\d+)(st|nd|rd|th))?([^(]+)\((\w+) (\d+), (\d+)\)`)
+	pubRegexp01 = regexp.MustCompile(`(^[A-Z][^;]+); ((\d+)(st|nd|rd|th))?([^(]+)\((\w+ \d+, \d+)\)`)
 	// No Starch Press (November 5, 2020)
-	pubRegexp02 = regexp.MustCompile(`(^[A-Z][^(;]+) \((\w+) (\d+), (\d+)\)`)
+	pubRegexp02 = regexp.MustCompile(`(^[A-Z][^(;]+) \((\w+ \d+, \d+)\)`)
 	// Esri Press; Fourth edition (December 28, 2021) / Esri Press; Fourth Bilingual edition (December 28, 2021)
-	pubRegexp03 = regexp.MustCompile(`(?i)(^[A-Z][^(;]+); ([a-z-A-Z]+(st|nd|rd|th)) ?\w* edition \((\w+) (\d+), (\d+)\)`)
+	pubRegexp03 = regexp.MustCompile(`(?i)(^[A-Z][^(;]+); ([a-z-A-Z]+(st|nd|rd|th)) ?\w* edition \((\w+ \d+, \d+)\)`)
 	// Packt Publishing; 3rd edition (17 May 2021)
-	pubRegexp04 = regexp.MustCompile(`(^[A-Z][^;]+); ((\d+)(st|nd|rd|th))?([^(]+)\((\d+) (\w+)\.? (\d+)\)`)
+	pubRegexp04 = regexp.MustCompile(`(^[A-Z][^;]+); ((\d+)(st|nd|rd|th))?([^(]+)\((\d+ \w+\.? \d+)\)`)
 	// No Starch Press (1 Oct. 2020)
-	pubRegexp05 = regexp.MustCompile(`(^[A-Z][^(;]+) \((\d+) (\w+)\.? (\d+)\)`)
+	pubRegexp05 = regexp.MustCompile(`(^[A-Z][^(;]+) \((\d+ \w+\.? \d+)\)`)
 	// Esri Press; Fourth edition (10 Feb. 2022) / Esri Press; Fourth Bilingual edition (10 Feb. 2022)
-	pubRegexp06 = regexp.MustCompile(`(?i)(^[A-Z][^(;]+); ([a-z-A-Z]+(st|nd|rd|th)) ?\w* edition \((\d+) (\w+)\.? (\d+)\)`)
+	pubRegexp06 = regexp.MustCompile(`(?i)(^[A-Z][^(;]+); ([a-z-A-Z]+(st|nd|rd|th)) ?\w* edition \((\d+ \w+\.? \d+)\)`)
 	// 522 pages
 	lengthRegex = regexp.MustCompile(`(^\d+) pages`)
 )
@@ -66,34 +72,28 @@ func ParseTitleString(titleString string) (string, string) {
 func ParsePublisherString(publisherString string) (BookPublishMeta, error) {
 	var publisher string
 	var edition = 1
-	var day int
-	var month string
-	var year int
+	var dateString string
 
 	// US format 1
 	subMatch := pubRegexp01.FindStringSubmatch(publisherString)
-	if len(subMatch) == 9 {
+	if len(subMatch) == 7 {
 		publisher = subMatch[1]
 		if subMatch[3] != "" {
 			edition, _ = strconv.Atoi(subMatch[3])
 		}
-		month = subMatch[6]
-		day, _ = strconv.Atoi(subMatch[7])
-		year, _ = strconv.Atoi(subMatch[8])
+		dateString = subMatch[6]
 	}
 
 	// US format 2
 	subMatch = pubRegexp02.FindStringSubmatch(publisherString)
-	if len(subMatch) == 5 {
+	if len(subMatch) == 3 {
 		publisher = subMatch[1]
-		month = subMatch[2]
-		day, _ = strconv.Atoi(subMatch[3])
-		year, _ = strconv.Atoi(subMatch[4])
+		dateString = subMatch[2]
 	}
 
 	// US format 3
 	subMatch = pubRegexp03.FindStringSubmatch(publisherString)
-	if len(subMatch) == 7 {
+	if len(subMatch) == 5 {
 		publisher = subMatch[1]
 		if subMatch[2] != "" {
 			ed, err := wordnumber.OrdinalToInt(subMatch[2])
@@ -101,35 +101,29 @@ func ParsePublisherString(publisherString string) (BookPublishMeta, error) {
 				edition = ed
 			}
 		}
-		month = subMatch[4]
-		day, _ = strconv.Atoi(subMatch[5])
-		year, _ = strconv.Atoi(subMatch[6])
+		dateString = subMatch[4]
 	}
 
 	// EU format 1
 	subMatch = pubRegexp04.FindStringSubmatch(publisherString)
-	if len(subMatch) == 9 {
+	if len(subMatch) == 7 {
 		publisher = subMatch[1]
 		if subMatch[3] != "" {
 			edition, _ = strconv.Atoi(subMatch[3])
 		}
-		day, _ = strconv.Atoi(subMatch[6])
-		month = subMatch[7]
-		year, _ = strconv.Atoi(subMatch[8])
+		dateString = subMatch[6]
 	}
 
 	// EU format 2
 	subMatch = pubRegexp05.FindStringSubmatch(publisherString)
-	if len(subMatch) == 5 {
+	if len(subMatch) == 3 {
 		publisher = subMatch[1]
-		day, _ = strconv.Atoi(subMatch[2])
-		month = subMatch[3]
-		year, _ = strconv.Atoi(subMatch[4])
+		dateString = subMatch[2]
 	}
 
 	// EU format 3
 	subMatch = pubRegexp06.FindStringSubmatch(publisherString)
-	if len(subMatch) == 7 {
+	if len(subMatch) == 5 {
 		publisher = subMatch[1]
 		if subMatch[2] != "" {
 			ed, err := wordnumber.OrdinalToInt(subMatch[2])
@@ -137,24 +131,22 @@ func ParsePublisherString(publisherString string) (BookPublishMeta, error) {
 				edition = ed
 			}
 		}
-		day, _ = strconv.Atoi(subMatch[4])
-		month = subMatch[5]
-		year, _ = strconv.Atoi(subMatch[6])
+		dateString = subMatch[4]
 	}
 
 	if publisher == "" {
 		return BookPublishMeta{}, fmt.Errorf("the publisher string '%s' can not be parsed", publisherString)
 	}
 
-	monthVal, err := time.Parse("Jan", month[:3])
+	date, err := ParseDateString(dateString)
 	if err != nil {
-		return BookPublishMeta{}, err
+		return BookPublishMeta{}, fmt.Errorf("can not get publication date: %w", err)
 	}
 
 	return BookPublishMeta{
 		Publisher: strings.TrimSpace(publisher),
 		Edition:   uint8(edition),
-		PubDate:   time.Date(year, monthVal.Month(), day, 0, 0, 0, 0, time.UTC),
+		PubDate:   date,
 	}, nil
 }
 
@@ -189,4 +181,17 @@ func ParseLengthString(lengthString string) uint16 {
 	}
 
 	return 0
+}
+
+// ParseDateString parses a date string in one of allowed formats and returns its value.
+func ParseDateString(dateString string) (time.Time, error) {
+	if t, err := time.Parse(dateLayout01, dateString); err == nil {
+		return t, nil
+	}
+
+	if t, err := time.Parse(dateLayout02, dateString); err == nil {
+		return t, nil
+	}
+
+	return time.Parse(dateLayout03, dateString)
 }
