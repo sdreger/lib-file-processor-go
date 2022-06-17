@@ -3,6 +3,7 @@ package author
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"github.com/lib/pq"
 	"github.com/sdreger/lib-file-processor-go/db/transaction"
 	"io"
@@ -74,6 +75,40 @@ func (s Store) UpsertAll(ctx context.Context, authors []string) ([]int64, error)
 	log.Printf("[INFO] - Stored author IDs: %d", ret)
 
 	return ret, nil
+}
+
+func (s Store) ReplaceBookAuthors(ctx context.Context, bookID int64, authorIDs []int64) error {
+	if bookID == 0 || len(authorIDs) == 0 {
+		return fmt.Errorf("there is no bookID: %q or authorIDs: %v", bookID, authorIDs)
+	}
+
+	return transaction.WithTransaction(ctx, s.db, func(txCtx context.Context, tx *sql.Tx) error {
+		deleteStmt, err := tx.PrepareContext(txCtx, "DELETE FROM ebook.book_author WHERE book_id = $1")
+		if err != nil {
+			return err
+		}
+		defer closeResource(deleteStmt)
+
+		_, err = deleteStmt.ExecContext(txCtx, bookID)
+		if err != nil {
+			return err
+		}
+
+		insertStmt, err := tx.PrepareContext(txCtx, "INSERT INTO ebook.book_author(book_id, author_id) VALUES ($1, $2)")
+		if err != nil {
+			return err
+		}
+		defer closeResource(insertStmt)
+
+		for _, authorID := range authorIDs {
+			_, err := insertStmt.ExecContext(txCtx, bookID, authorID)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 }
 
 func closeResource(rows io.Closer) {
