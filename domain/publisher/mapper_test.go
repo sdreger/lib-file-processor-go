@@ -1,4 +1,4 @@
-package mapper
+package publisher
 
 import "testing"
 
