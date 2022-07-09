@@ -10,15 +10,15 @@ import (
 	"log"
 )
 
-type Store struct {
+type DbStore struct {
 	db *sql.DB
 }
 
-func NewStore(db *sql.DB) Store {
-	return Store{db: db}
+func NewStore(db *sql.DB) DbStore {
+	return DbStore{db: db}
 }
 
-func (s Store) UpsertAll(ctx context.Context, authors []string) ([]int64, error) {
+func (s DbStore) UpsertAll(ctx context.Context, authors []string) ([]int64, error) {
 	if len(authors) == 0 {
 		return []int64{}, nil
 	}
@@ -77,7 +77,7 @@ func (s Store) UpsertAll(ctx context.Context, authors []string) ([]int64, error)
 	return ret, nil
 }
 
-func (s Store) ReplaceBookAuthors(ctx context.Context, bookID int64, authorIDs []int64) error {
+func (s DbStore) ReplaceBookAuthors(ctx context.Context, bookID int64, authorIDs []int64) error {
 	if bookID == 0 || len(authorIDs) == 0 {
 		return fmt.Errorf("there is no bookID: %q or authorIDs: %v", bookID, authorIDs)
 	}
