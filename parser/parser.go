@@ -12,7 +12,7 @@ import (
 const (
 	dateLayout01 = "January 2, 2006"
 	dateLayout02 = "2 Jan. 2006"
-	dateLayout03 = "2 Jan 2006"
+	dateLayout03 = "2 January 2006"
 )
 
 var (

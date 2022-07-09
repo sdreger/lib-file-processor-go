@@ -28,6 +28,10 @@ func TestParseDateString(t *testing.T) {
 			date:  time.Date(2021, 5, 17, 0, 0, 0, 0, time.UTC),
 		},
 		{
+			input: "13 July 2022",
+			date:  time.Date(2022, 7, 13, 0, 0, 0, 0, time.UTC),
+		},
+		{
 			input:             "Sun, 28 Oct 2015",
 			date:              time.Time{},
 			shouldReturnError: true,
