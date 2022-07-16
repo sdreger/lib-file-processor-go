@@ -24,12 +24,8 @@ func TestParseDateString(t *testing.T) {
 			date:  time.Date(2021, 5, 17, 0, 0, 0, 0, time.UTC),
 		},
 		{
-			input: "17 May 2021",
-			date:  time.Date(2021, 5, 17, 0, 0, 0, 0, time.UTC),
-		},
-		{
-			input: "13 July 2022",
-			date:  time.Date(2022, 7, 13, 0, 0, 0, 0, time.UTC),
+			input: "30 Sept. 2022",
+			date:  time.Date(2022, 9, 30, 0, 0, 0, 0, time.UTC),
 		},
 		{
 			input:             "Sun, 28 Oct 2015",
@@ -42,9 +38,14 @@ func TestParseDateString(t *testing.T) {
 	for i, tt := range tests {
 		t.Logf("\tTest: %d\tWhen checking %q for date %s\n", i, tt.input, tt.date)
 		date, err := ParseDateString(tt.input)
-		if !tt.shouldReturnError && err != nil {
+		if err != nil {
+			if tt.shouldReturnError {
+				t.Logf("\t\t%s\tShould get an error.", succeed)
+				continue
+			}
 			t.Fatalf("\t\t%s\tShould be able to get date value: %v", failed, err)
 		}
+
 		if date != tt.date {
 			t.Errorf("\t\t%s\tShould get a %s date: %s", failed, tt.date, date)
 		} else {

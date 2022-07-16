@@ -185,6 +185,14 @@ func ParseLengthString(lengthString string) uint16 {
 
 // ParseDateString parses a date string in one of allowed formats and returns its value.
 func ParseDateString(dateString string) (time.Time, error) {
+	// Handle invalid month abbreviation, like: '30 Sept. 2022', and normalize it to: '30 Sep. 2022' form
+	if strings.Contains(dateString, ".") {
+		splitString := strings.Split(dateString, " ")
+		if len(splitString) == 3 && len(splitString[1]) > 4 {
+			dateString = fmt.Sprintf("%s %s. %s", splitString[0], splitString[1][:3], splitString[2])
+		}
+	}
+
 	if t, err := time.Parse(dateLayout01, dateString); err == nil {
 		return t, nil
 	}
