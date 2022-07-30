@@ -8,6 +8,7 @@ import (
 )
 
 func TestCompressBookFiles(t *testing.T) {
+	t.Log("Given the need to test book files compression.")
 	archiveFileName := "test-archive.zip"
 	inputFileName01 := "input1.pdf"
 	inputFileName02 := "input2.epub"
@@ -67,6 +68,7 @@ func TestCompressBookFiles(t *testing.T) {
 }
 
 func TestExtractBookFiles(t *testing.T) {
+	t.Log("Given the need to test book files extraction.")
 	// temporary folder to use as 'zip' file input folder
 	tempInputDir, err := os.MkdirTemp("", "extract-input-dir-*")
 	if err != nil {
