@@ -49,6 +49,74 @@ func (cs CompressionService) CompressBookFiles(filesFolder, archiveOutputFolder,
 	return bookArchiveOutputPath, fileNames, nil
 }
 
+// ExtractZipFile extracts all book files from a compressed 'zip' archive located in the 'zipFilePath'
+// to the 'pathToExtract'. Removes the source 'zip' file after successful extraction. Returns an error if any.
+func (cs CompressionService) ExtractZipFile(zipFilePath string, pathToExtract string) error {
+	zipReader, err := zip.OpenReader(zipFilePath)
+	if err != nil {
+		return err
+	}
+
+	for _, f := range zipReader.File {
+		outputPath := filepath.Join(pathToExtract, f.Name)
+		//log.Println("unzipping file ", outputPath)
+
+		if f.FileInfo().IsDir() {
+			//log.Println("creating directory...")
+			err := os.MkdirAll(pathToExtract, os.ModePerm)
+			if err != nil {
+				return err
+			}
+			continue
+		}
+
+		if err := os.MkdirAll(filepath.Dir(outputPath), os.ModePerm); err != nil {
+			return err
+		}
+
+		dstFile, err := os.OpenFile(outputPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+		if err != nil {
+			return err
+		}
+
+		srcFile, err := f.Open()
+		if err != nil {
+			return err
+		}
+
+		if _, err := io.Copy(dstFile, srcFile); err != nil {
+			return err
+		}
+
+		err = os.Chtimes(outputPath, f.Modified, f.Modified)
+		if err != nil {
+			return err
+		}
+
+		err = dstFile.Close()
+		if err != nil {
+			return err
+		}
+
+		err = srcFile.Close()
+		if err != nil {
+			return err
+		}
+	}
+
+	err = zipReader.Close()
+	if err != nil {
+		return err
+	}
+
+	err = os.Remove(zipFilePath)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // getFilesForCompression returns a list of files to be compressed from a particular directory.
 func getFilesForCompression(fileDir string) ([]string, error) {
 	dirEntries, err := os.ReadDir(fileDir)

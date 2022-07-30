@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -57,7 +58,7 @@ func testMockServer(t *testing.T) *httptest.Server {
 	server := httptest.NewServer(mux)
 
 	mux.HandleFunc(coverFileURL, func(rw http.ResponseWriter, req *http.Request) {
-		file, err := os.Open("testdata/1.png")
+		file, err := os.Open(filepath.Join("testdata", "1.png"))
 		if err != nil {
 			t.Fatal(err)
 		}

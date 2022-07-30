@@ -1,6 +1,7 @@
 package filestore
 
 import (
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -63,4 +64,65 @@ func TestCompressBookFiles(t *testing.T) {
 	}
 
 	t.Logf("\t\t%s\tShould successfully compress book files", succeed)
+}
+
+func TestExtractBookFiles(t *testing.T) {
+	// temporary folder to use as 'zip' file input folder
+	tempInputDir, err := os.MkdirTemp("", "extract-input-dir-*")
+	if err != nil {
+		t.Fatalf("\t\t%s\tShould be able to create output folder: %v", failed, err)
+	}
+	defer os.RemoveAll(tempInputDir)
+
+	// test file will be removed, so we need to copy it to a temporary folder
+	testZipFile, err := os.Open(filepath.Join("testdata", "test.zip"))
+	if err != nil {
+		t.Fatalf("\t\t%s\tShould be able to open test file: %v", failed, err)
+	}
+	tempZipFile, err := os.Create(filepath.Join(tempInputDir, "test.zip"))
+	if err != nil {
+		t.Fatalf("\t\t%s\tShould be able to create temporary test file: %v", failed, err)
+	}
+	_, err = io.Copy(tempZipFile, testZipFile)
+	if err != nil {
+		t.Fatalf("\t\t%s\tShould be able to copy test file: %v", failed, err)
+	}
+
+	// temporary folder for 'zip' file extraction
+	tempOutputDir, err := os.MkdirTemp("", "extract-output-dir-*")
+	if err != nil {
+		t.Fatalf("\t\t%s\tShould be able to create output folder: %v", failed, err)
+	}
+	defer os.RemoveAll(tempOutputDir)
+
+	err = NewCompressionService().ExtractZipFile(tempZipFile.Name(), tempOutputDir)
+	if err != nil {
+		t.Fatalf("\t\t%s\tShould be able to extract zip file: %v", failed, err)
+	}
+
+	// checks if there is an extracted file in the output folder
+	outputDirEntries, err := os.ReadDir(tempOutputDir)
+	if err != nil {
+		t.Fatalf("\t\t%s\tShould be able to read output folder: %v", failed, err)
+	}
+	if len(outputDirEntries) != 1 {
+		t.Fatalf("\t\t%s\tOutput folder should contain exactly 1 file", failed)
+	}
+	if outputDirEntries[0].Name() != "test.txt" {
+		t.Fatalf("\t\t%s\tOutput folder contains wrong extracted file: %q", failed, outputDirEntries[0].Name())
+	}
+	if fileInfo, err := outputDirEntries[0].Info(); err != nil || fileInfo.Size() == 0 {
+		t.Fatalf("\t\t%s\tExtracted file is corrupted: %v", failed, err)
+	}
+
+	// check if the source 'zip' file was removed
+	inputDirEntries, err := os.ReadDir(tempInputDir)
+	if err != nil {
+		t.Fatalf("\t\t%s\tShould be able to read input folder: %v", failed, err)
+	}
+	if len(inputDirEntries) != 0 {
+		t.Fatalf("\t\t%s\tInput folder should be empty", failed)
+	}
+
+	t.Logf("\t\t%s\tShould successfully extract a book file", succeed)
 }
