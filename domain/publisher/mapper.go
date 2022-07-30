@@ -3,12 +3,13 @@ package publisher
 import "strings"
 
 var publisherNameMapping = map[string]string{
-	"acm books":                        "ACM",
+	"acm books":                        "MaC",
 	"academic press":                   "AP",
 	"apress":                           "Apress",
 	"addison-wesley":                   "AW",
 	"bcs":                              "BCS",
 	"bpb":                              "BPB",
+	"birkhäuser":                       "Springer",
 	"cisco":                            "Cisco",
 	"cengage":                          "CL",
 	"course technology":                "CL",
@@ -21,6 +22,7 @@ var publisherNameMapping = map[string]string{
 	"taylor and francis":               "CRC",
 	"cambridge university press":       "CUP",
 	"de gruyter":                       "DG",
+	"de|g":                             "DG",
 	"dk":                               "DK",
 	"dk children":                      "DK",
 	"dorling kindersley":               "DK",
@@ -55,9 +57,11 @@ var publisherNameMapping = map[string]string{
 	"pearson":                          "Pearson",
 	"pragmatic":                        "Pragmatic",
 	"razeware":                         "Razeware",
+	"river publishers":                 "River",
 	"sams":                             "Sams",
 	"springer":                         "Springer",
 	"wiley":                            "Wiley",
+	"world scientific":                 "WSPC",
 }
 
 // MapPublisherName map the full publisher name to its short form.

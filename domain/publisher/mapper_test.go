@@ -7,13 +7,14 @@ func TestMapPublisherName(t *testing.T) {
 		input  string
 		output string
 	}{
-		{input: "ACM Books", output: "ACM"},
+		{input: "ACM Books", output: "MaC"},
 		{input: "Academic Press", output: "AP"},
 		{input: "Apress", output: "Apress"},
 		{input: "Addison-Wesley", output: "AW"},
 		{input: "Addison-Wesley Professional", output: "AW"},
 		{input: "BCS", output: "BCS"},
 		{input: "BPB", output: "BPB"},
+		{input: "Birkhäuser", output: "Springer"},
 		{input: "Cisco press", output: "Cisco"},
 		{input: "Cengage Learning", output: "CL"},
 		{input: "Course Technology", output: "CL"},
@@ -27,6 +28,7 @@ func TestMapPublisherName(t *testing.T) {
 		{input: "Taylor and Francis", output: "CRC"},
 		{input: "Cambridge University Press", output: "CUP"},
 		{input: "De Gruyter", output: "DG"},
+		{input: "De|G Press", output: "DG"},
 		{input: "De Gruyter Oldenbourg", output: "DG"},
 		{input: "DK", output: "DK"},
 		{input: "Dorling Kindersley", output: "DK"},
@@ -77,11 +79,13 @@ func TestMapPublisherName(t *testing.T) {
 		{input: "Pearson Education ESL", output: "Pearson"},
 		{input: "Pragmatic Bookshelf", output: "Pragmatic"},
 		{input: "Razeware LLC", output: "Razeware"},
+		{input: "River Publishers", output: "River"},
 		{input: "Sams", output: "Sams"},
 		{input: "Sams Publishing", output: "Sams"},
 		{input: "Springer", output: "Springer"},
 		{input: "Wiley", output: "Wiley"},
 		{input: "Wiley-Blackwell", output: "Wiley"},
+		{input: "World Scientific Pub Co Inc", output: "WSPC"},
 		{input: "Unknown Weird Name", output: "Unknown Weird Name"},
 	}
 
