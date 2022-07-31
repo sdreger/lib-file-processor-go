@@ -3,8 +3,17 @@ package book
 import (
 	"database/sql"
 	"fmt"
+	"github.com/mantidtech/wordnumber"
+	"regexp"
 	"strings"
 	"time"
+)
+
+var (
+	bookFileFormatRegex      = regexp.MustCompile(`[\s]|[:] |[,] | ?[()] ?| ?[\[\]] ?|[/]`)
+	utf8CleanupRegex         = regexp.MustCompile(`[^#\-().,\p{L}\p{N}\p{Z}\p{Sm}\p{Sc}\p{Sk}\p{Pi}\p{Pf}\p{Pc}\p{Mc}]`)
+	bookFileNameCleanupRegex = regexp.MustCompile(`[´’]`)
+	multiDotCleanupRegex     = regexp.MustCompile(`\.{2,}`)
 )
 
 type ParsedData struct {
@@ -46,7 +55,13 @@ func (pd ParsedData) String() string {
 	b.WriteString(fmt.Sprintln("book.ParsedData: {"))
 	b.WriteString(fmt.Sprintf("\tTitle: %q\n", pd.Title))
 	b.WriteString(fmt.Sprintf("\tSubtitle: %q\n", pd.Subtitle))
-	b.WriteString(fmt.Sprintf("\tDescription: \"%s...%s\"\n", pd.Description[:40], pd.Description[len(pd.Description)-40:]))
+	var description string
+	if len(pd.Description) > 40 {
+		description = fmt.Sprintf("%s...%s", pd.Description[:40], pd.Description[len(pd.Description)-40:])
+	} else {
+		description = pd.Description
+	}
+	b.WriteString(fmt.Sprintf("\tDescription: %q\n", description))
 	b.WriteString(fmt.Sprintf("\tISBN10: %q\n", pd.ISBN10))
 	b.WriteString(fmt.Sprintf("\tISBN13: %d\n", pd.ISBN13))
 	b.WriteString(fmt.Sprintf("\tASIN: %q\n", pd.ASIN))
@@ -67,6 +82,39 @@ func (pd ParsedData) String() string {
 	b.WriteString(fmt.Sprintln("}"))
 
 	return b.String()
+}
+
+func (pd ParsedData) GetBookFileName() string {
+	separator := " "
+	builder := strings.Builder{}
+	builder.WriteString(pd.Publisher)
+	builder.WriteString(separator)
+	builder.WriteString(pd.Title)
+	builder.WriteString(separator)
+	if pd.Edition > 1 {
+		ordinalShort, _ := wordnumber.IntToOrdinalShort(int(pd.Edition))
+		builder.WriteString(ordinalShort)
+		builder.WriteString(separator)
+		builder.WriteString("Edition")
+		builder.WriteString(separator)
+	}
+	bookID := pd.GetPrimaryId()
+	if bookID != "" {
+		builder.WriteString(bookID)
+		builder.WriteString(separator)
+	}
+	builder.WriteString(pd.PubDate.Format("Jan 2006"))
+	builder.WriteString(".zip")
+	// Replace '&' symbols with 'and' word
+	result := strings.ReplaceAll(builder.String(), "&", "and")
+	// Replace all spaces and colons with the '.' symbol
+	result = bookFileFormatRegex.ReplaceAllString(result, ".")
+	// Cleanup the filename removing all non UTF-8 symbols
+	result = utf8CleanupRegex.ReplaceAllString(result, "")
+	// Cleanup the filename removing all unwanted symbols
+	result = bookFileNameCleanupRegex.ReplaceAllString(result, "")
+	// Get rid of multiple dot separators
+	return multiDotCleanupRegex.ReplaceAllString(result, ".")
 }
 
 func (pd ParsedData) GetBookFileNameWithoutExtension() string {
