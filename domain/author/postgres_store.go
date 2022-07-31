@@ -10,15 +10,17 @@ import (
 	"log"
 )
 
-type DbStore struct {
+type PostgresStore struct {
 	db *sql.DB
 }
 
-func NewStore(db *sql.DB) DbStore {
-	return DbStore{db: db}
+func NewPostgresStore(db *sql.DB) PostgresStore {
+	return PostgresStore{db: db}
 }
 
-func (s DbStore) UpsertAll(ctx context.Context, authors []string) ([]int64, error) {
+// UpsertAll adds new authors from the input slice, existing authors are ignored.
+// Returns both new and existing IDs for all authors from the input slice.
+func (s PostgresStore) UpsertAll(ctx context.Context, authors []string) ([]int64, error) {
 	if len(authors) == 0 {
 		return []int64{}, nil
 	}
@@ -72,12 +74,13 @@ func (s DbStore) UpsertAll(ctx context.Context, authors []string) ([]int64, erro
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("[INFO] - Stored author IDs: %d", ret)
 
 	return ret, nil
 }
 
-func (s DbStore) ReplaceBookAuthors(ctx context.Context, bookID int64, authorIDs []int64) error {
+// ReplaceBookAuthors removes all records from the book-author join table for the particular book.
+// And adds new records for all authors from the input slice.
+func (s PostgresStore) ReplaceBookAuthors(ctx context.Context, bookID int64, authorIDs []int64) error {
 	if bookID == 0 || len(authorIDs) == 0 {
 		return fmt.Errorf("there is no bookID: %q or authorIDs: %v", bookID, authorIDs)
 	}

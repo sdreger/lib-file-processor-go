@@ -38,7 +38,7 @@ func testUpsertAllBothNew(t *testing.T) {
 
 	db, mock := initMockDB(t)
 	defer db.Close()
-	store := NewStore(db)
+	store := NewPostgresStore(db)
 
 	mock.ExpectBegin()
 	selectPrepare := mock.ExpectPrepare("SELECT id, name FROM ebook.authors WHERE name = ANY \\(\\$1\\)").
@@ -75,7 +75,7 @@ func testUpsertAllOneNew(t *testing.T) {
 
 	db, mock := initMockDB(t)
 	defer db.Close()
-	store := NewStore(db)
+	store := NewPostgresStore(db)
 
 	mock.ExpectBegin()
 	selectPrepare := mock.ExpectPrepare("SELECT id, name FROM ebook.authors WHERE name = ANY \\(\\$1\\)").
@@ -111,7 +111,7 @@ func testUpsertAllBothExisting(t *testing.T) {
 
 	db, mock := initMockDB(t)
 	defer db.Close()
-	store := NewStore(db)
+	store := NewPostgresStore(db)
 
 	mock.ExpectBegin()
 	selectPrepare := mock.ExpectPrepare("SELECT id, name FROM ebook.authors WHERE name = ANY \\(\\$1\\)").
@@ -140,7 +140,7 @@ func testUpsertAllBothExisting(t *testing.T) {
 func testUpsertAllNoAuthors(t *testing.T) {
 	db, _ := initMockDB(t)
 	defer db.Close()
-	store := NewStore(db)
+	store := NewPostgresStore(db)
 
 	authorIDs, err := store.UpsertAll(context.Background(), []string{})
 	if err != nil {
@@ -168,7 +168,7 @@ func testReplaceBookAuthors(t *testing.T) {
 
 	db, mock := initMockDB(t)
 	defer db.Close()
-	store := NewStore(db)
+	store := NewPostgresStore(db)
 
 	mock.ExpectBegin()
 	deletePrepare := mock.ExpectPrepare("DELETE FROM ebook.book_author WHERE book_id = \\$1").WillBeClosed()
@@ -192,7 +192,7 @@ func testReplaceBookAuthors(t *testing.T) {
 func testReplaceBookAuthorsErrorNoAuthors(t *testing.T) {
 	db, _ := initMockDB(t)
 	defer db.Close()
-	store := NewStore(db)
+	store := NewPostgresStore(db)
 
 	err := store.ReplaceBookAuthors(context.Background(), testBookId, []int64{})
 	if err == nil {
@@ -205,7 +205,7 @@ func testReplaceBookAuthorsErrorNoAuthors(t *testing.T) {
 func testReplaceBookAuthorsErrorNoBookID(t *testing.T) {
 	db, _ := initMockDB(t)
 	defer db.Close()
-	store := NewStore(db)
+	store := NewPostgresStore(db)
 
 	err := store.ReplaceBookAuthors(context.Background(), 0, []int64{1, 2})
 	if err == nil {
