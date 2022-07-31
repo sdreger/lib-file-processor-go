@@ -1,0 +1,24 @@
+package config
+
+type AppConfig struct {
+	ZipInputFolder    string
+	BookInputFolder   string
+	BookOutputFolder  string
+	CoverOutputFolder string
+	TempFolder        string
+	NewLineDelimiter  byte
+
+	DBConnectionString string
+
+	MinioEndpoint        string
+	MinioAccessKeyID     string
+	MinioSecretAccessKey string
+	MinioUseSSL          bool
+
+	DBAvailable        bool
+	BlobStoreAvailable bool
+}
+
+func (a AppConfig) IsStatelessMode() bool {
+	return !a.DBAvailable || !a.BlobStoreAvailable
+}
