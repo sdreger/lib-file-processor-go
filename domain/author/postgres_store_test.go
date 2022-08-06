@@ -12,7 +12,7 @@ const (
 	succeed = "\u2713"
 	failed  = "\u2717"
 
-	testBookId = 1
+	testBookID = 1
 )
 
 var (
@@ -20,7 +20,7 @@ var (
 )
 
 func TestStore_UpsertAll(t *testing.T) {
-	t.Log("Given the need to test upsert authors flow")
+	t.Log("Given the need to test authors upsert")
 	t.Run("Upsert two new records", testUpsertAllBothNew)
 	t.Run("Upsert one new and one existing records", testUpsertAllOneNew)
 	t.Run("Upsert two existing records", testUpsertAllBothExisting)
@@ -43,8 +43,7 @@ func testUpsertAllBothNew(t *testing.T) {
 	mock.ExpectBegin()
 	selectPrepare := mock.ExpectPrepare("SELECT id, name FROM ebook.authors WHERE name = ANY \\(\\$1\\)").
 		WillBeClosed()
-	selectQuery := selectPrepare.ExpectQuery().WithArgs(pq.Array(authorsToUpsert))
-	selectQuery.WillReturnRows(rowsSelected)
+	selectPrepare.ExpectQuery().WithArgs(pq.Array(authorsToUpsert)).WillReturnRows(rowsSelected).RowsWillBeClosed()
 
 	// Two new inserts
 	insertPrepare := mock.ExpectPrepare("INSERT INTO ebook.authors\\(name\\) VALUES \\(\\$1\\) RETURNING id").
@@ -82,7 +81,7 @@ func testUpsertAllOneNew(t *testing.T) {
 		WillBeClosed()
 	selectQuery := selectPrepare.ExpectQuery().WithArgs(pq.Array(authorsToUpsert))
 	rowToReturn := rowsSelected.AddRow(existingAuthorID, authorsToUpsert[0])
-	selectQuery.WillReturnRows(rowToReturn)
+	selectQuery.WillReturnRows(rowToReturn).RowsWillBeClosed()
 
 	// One new insert
 	insertPrepare := mock.ExpectPrepare("INSERT INTO ebook.authors\\(name\\) VALUES \\(\\$1\\) RETURNING id").
@@ -120,7 +119,7 @@ func testUpsertAllBothExisting(t *testing.T) {
 	rowToReturn := rowsSelected.
 		AddRow(existingAuthorID01, authorsToUpsert[0]).
 		AddRow(existingAuthorID02, authorsToUpsert[1])
-	selectQuery.WillReturnRows(rowToReturn)
+	selectQuery.WillReturnRows(rowToReturn).RowsWillBeClosed()
 
 	// No new inserts
 	mock.ExpectPrepare("INSERT INTO ebook.authors\\(name\\) VALUES \\(\\$1\\) RETURNING id").WillBeClosed()
@@ -172,15 +171,15 @@ func testReplaceBookAuthors(t *testing.T) {
 
 	mock.ExpectBegin()
 	deletePrepare := mock.ExpectPrepare("DELETE FROM ebook.book_author WHERE book_id = \\$1").WillBeClosed()
-	deletePrepare.ExpectExec().WithArgs(testBookId).WillReturnResult(sqlmock.NewResult(0, 1))
+	deletePrepare.ExpectExec().WithArgs(testBookID).WillReturnResult(sqlmock.NewResult(0, 1))
 	insertPrepare := mock.
 		ExpectPrepare("INSERT INTO ebook.book_author\\(book_id, author_id\\) VALUES \\(\\$1, \\$2\\)").
 		WillBeClosed()
-	insertPrepare.ExpectExec().WithArgs(testBookId, newAuthorID01).WillReturnResult(sqlmock.NewResult(0, 1))
-	insertPrepare.ExpectExec().WithArgs(testBookId, newAuthorID02).WillReturnResult(sqlmock.NewResult(0, 1))
+	insertPrepare.ExpectExec().WithArgs(testBookID, newAuthorID01).WillReturnResult(sqlmock.NewResult(0, 1))
+	insertPrepare.ExpectExec().WithArgs(testBookID, newAuthorID02).WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectCommit()
 
-	err := store.ReplaceBookAuthors(context.Background(), testBookId, authorIDs)
+	err := store.ReplaceBookAuthors(context.Background(), testBookID, authorIDs)
 	if err != nil {
 		t.Errorf("\t\t%s\tShould be able to add new book-author relatons: %v", failed, err)
 	}
@@ -194,7 +193,7 @@ func testReplaceBookAuthorsErrorNoAuthors(t *testing.T) {
 	defer db.Close()
 	store := NewPostgresStore(db)
 
-	err := store.ReplaceBookAuthors(context.Background(), testBookId, []int64{})
+	err := store.ReplaceBookAuthors(context.Background(), testBookID, []int64{})
 	if err == nil {
 		t.Fatalf("\t\t%s\tAn error is expected when there are no authors", failed)
 	}
