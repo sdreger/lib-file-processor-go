@@ -5,7 +5,7 @@ type AppConfig struct {
 	BookInputFolder   string
 	BookOutputFolder  string
 	CoverOutputFolder string
-	TempFolder        string
+	TempInputFolder   string
 	NewLineDelimiter  byte
 
 	DBConnectionString string

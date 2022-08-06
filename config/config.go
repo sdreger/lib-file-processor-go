@@ -1,7 +1,6 @@
 package config
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"runtime"
@@ -9,13 +8,13 @@ import (
 )
 
 const (
-	defaultTempFolder        = "temp"
+	defaultTempFolder        = "in_temp"
 	defaultBookInputFolder   = "in_book"
 	defaultBookZipFolder     = "in_zip"
 	defaultBookOutputFolder  = "out_book"
 	defaultCoverOutputFolder = "out_cover"
 
-	defaultDBHost     = "127.0.0.1"
+	defaultDBHost     = "127.0.0.1:5432"
 	defaultDBUser     = "postgres"
 	defaultDBPassword = "postgres"
 	defaultDBName     = "sandbox"
@@ -36,16 +35,35 @@ const (
 	EnvVarKeyMinioAccessKeyID     = "MINIO_ACCESS_KEY_ID"
 	EnvVarKeyMinioSecretAccessKey = "MINIO_SECRET_ACCESS_KEY"
 	EnvVarKeyMinioUseSSL          = "MINIO_USE_SSL"
+
+	EnvVarDirInputTemp     = "DIR_INPUT_TEMP"
+	EnvVarDirInputZip      = "DIR_INPUT_ZIP"
+	EnvVarDirInputBook     = "DIR_INPUT_BOOK"
+	EnvVarDirOutputArchive = "DIR_OUTPUT_ARCHIVE"
+	EnvVarDirOutputCover   = "DIR_OUTPUT_COVER"
 )
 
 func GetAppConfig() AppConfig {
-	var bookZipFolder, bookInputFolder, bookOutputFolder, coverOutputFolder, tempFolder string
-	flag.StringVar(&tempFolder, "temp", defaultTempFolder, "temp folder for intermediate files")
-	flag.StringVar(&bookZipFolder, "input-zip", defaultBookZipFolder, "input folder with a book zip file")
-	flag.StringVar(&bookInputFolder, "input-book", defaultBookInputFolder, "input folder with a book files")
-	flag.StringVar(&bookOutputFolder, "output-archive", defaultBookOutputFolder, "output folder for a book archive")
-	flag.StringVar(&coverOutputFolder, "output-cover", defaultCoverOutputFolder, "output folder for a book cover")
-	flag.Parse()
+	bookZipFolder := defaultBookZipFolder
+	tempFolder := defaultTempFolder
+	bookInputFolder := defaultBookInputFolder
+	bookOutputFolder := defaultBookOutputFolder
+	coverOutputFolder := defaultCoverOutputFolder
+	if bookZipFolderVal, bookZipFolderValSet := os.LookupEnv(EnvVarDirInputZip); bookZipFolderValSet {
+		bookZipFolder = bookZipFolderVal
+	}
+	if tempFolderVal, tempFolderValSet := os.LookupEnv(EnvVarDirInputTemp); tempFolderValSet {
+		tempFolder = tempFolderVal
+	}
+	if bookInputFolderVal, bookInputFolderValSet := os.LookupEnv(EnvVarDirInputBook); bookInputFolderValSet {
+		bookInputFolder = bookInputFolderVal
+	}
+	if bookOutputFolderVal, bookOutputFolderValSet := os.LookupEnv(EnvVarDirOutputArchive); bookOutputFolderValSet {
+		bookOutputFolder = bookOutputFolderVal
+	}
+	if coverOutputFolderVal, coverOutputFolderValSet := os.LookupEnv(EnvVarDirOutputCover); coverOutputFolderValSet {
+		coverOutputFolder = coverOutputFolderVal
+	}
 
 	DBHost := defaultDBHost
 	DBUser := defaultDBUser
@@ -93,7 +111,7 @@ func GetAppConfig() AppConfig {
 		BookInputFolder:      bookInputFolder,
 		BookOutputFolder:     bookOutputFolder,
 		CoverOutputFolder:    coverOutputFolder,
-		TempFolder:           tempFolder,
+		TempInputFolder:      tempFolder,
 		NewLineDelimiter:     getNewLineDelimiter(),
 		DBConnectionString:   getDBConnectionString(DBHost, DBUser, DBPassword, DBName, DBSchema),
 		MinioEndpoint:        MinioEndpoint,
