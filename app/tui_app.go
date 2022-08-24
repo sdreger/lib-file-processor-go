@@ -295,14 +295,17 @@ func (t *TuiApp) fillParsedForm(form *tview.Form, parsedData *book.ParsedData) {
 	form.AddInputField("CoverURL:", parsedData.CoverURL, 0, nil, func(text string) {
 		parsedData.CoverURL = text
 	})
+
 	form.AddButton("Add", func() {
 		t.validateAuthors(parsedData)
+		t.validateCategories(parsedData)
 		t.ignoreExistingData = true // ignore existing, force to create a new record
 		t.saveBook()
 	})
 	if t.existingData != nil {
 		form.AddButton("Update", func() {
 			t.validateAuthors(parsedData)
+			t.validateCategories(parsedData)
 			t.saveBook()
 		})
 		form.SetFocus(21) // Update Button
@@ -321,9 +324,17 @@ func (t *TuiApp) validateAuthors(parsedData *book.ParsedData) {
 	if strings.Contains(strings.Join(parsedData.Authors, ";"), "author") {
 		t.editErrorMap["AuthorName"] = fmt.Errorf("the 'author' word should not be present")
 	} else if isContainOneWordItem(parsedData.Authors) {
-		t.editErrorMap["AuthorName"] = fmt.Errorf("an author name contain 1 word")
+		t.editErrorMap["AuthorName"] = fmt.Errorf("an author name should contain at least 2 words")
 	} else {
 		delete(t.editErrorMap, "AuthorName")
+	}
+}
+
+func (t *TuiApp) validateCategories(parsedData *book.ParsedData) {
+	if len(parsedData.Categories) == 0 {
+		t.editErrorMap["Categories"] = fmt.Errorf("there should be at least one category")
+	} else {
+		delete(t.editErrorMap, "Categories")
 	}
 }
 
