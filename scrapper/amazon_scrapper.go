@@ -18,18 +18,19 @@ const (
 
 	userAgentSafari = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.3 Safari/605.1.15"
 
-	publisherKey   = "Publisher"
-	editionKey     = "Edition"
-	pubDateKey     = "Publication date"
-	pagesKey       = "Print pages"
-	printLengthKey = "Print length"
-	hardcoverKey   = "Hardcover"
-	paperbackKey   = "Paperback"
-	sourceISBNKey  = "Page numbers source ISBN"
-	ISBN10Key      = "ISBN-10"
-	ISBN13Key      = "ISBN-13"
-	ASINKey        = "ASIN"
-	languageKey    = "Language"
+	publisherKey         = "Publisher"
+	editionKey           = "Edition"
+	pubDateKey           = "Publication date"
+	pagesKey             = "Print pages"
+	printLengthKey       = "Print length"
+	hardcoverKey         = "Hardcover"
+	paperbackKey         = "Paperback"
+	printedAccessCodeKey = "Printed Access Code"
+	sourceISBNKey        = "Page numbers source ISBN"
+	ISBN10Key            = "ISBN-10"
+	ISBN13Key            = "ISBN-13"
+	ASINKey              = "ASIN"
+	languageKey          = "Language"
 
 	bookTitleSelector       = `span[id=productTitle]`
 	bookSubtitleSelector    = `span[id=productSubtitle]`
@@ -196,7 +197,7 @@ func (s *AmazonScrapper) GetBookData(bookID string) (book.ParsedData, error) {
 		ISBN10:        isbn10,
 		ISBN13:        int64(isbn13),
 		ASIN:          detailsBlock[ASINKey],
-		Pages:         getBookLength(detailsBlock[pagesKey], detailsBlock[paperbackKey], detailsBlock[hardcoverKey], detailsBlock[printLengthKey]),
+		Pages:         getBookLength(detailsBlock),
 		Language:      detailsBlock[languageKey],
 		PublisherURL:  "",
 		Publisher:     publisher.MapPublisherName(publishMeta.Publisher),
@@ -303,7 +304,11 @@ func getPublisherURL(basePath, ISBN10, ASIN string) string {
 	return basePath + ASIN
 }
 
-func getBookLength(pagesString, paperbackString, hardcoverString, printLength string) uint16 {
+func getBookLength(detailsBlock map[string]string) uint16 {
+	pagesString, paperbackString, hardcoverString, printLength, printedAccessCode :=
+		detailsBlock[pagesKey], detailsBlock[paperbackKey],
+		detailsBlock[hardcoverKey], detailsBlock[printLengthKey],
+		detailsBlock[printedAccessCodeKey]
 	if pagesString != "" {
 		return parser.ParseLengthString(pagesString)
 	}
@@ -315,6 +320,9 @@ func getBookLength(pagesString, paperbackString, hardcoverString, printLength st
 	}
 	if printLength != "" {
 		return parser.ParseLengthString(printLength)
+	}
+	if printedAccessCode != "" {
+		return parser.ParseLengthString(printedAccessCode)
 	}
 
 	return 0
