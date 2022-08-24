@@ -78,6 +78,7 @@ func TestMapPublisherName(t *testing.T) {
 		{input: "Pearson Education", output: "Pearson"},
 		{input: "Pearson Education ESL", output: "Pearson"},
 		{input: "Pragmatic Bookshelf", output: "Pragmatic"},
+		{input: "Princeton University Press", output: "Princeton"},
 		{input: "Razeware LLC", output: "Razeware"},
 		{input: "River Publishers", output: "River"},
 		{input: "Sams", output: "Sams"},

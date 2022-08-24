@@ -56,6 +56,7 @@ var publisherNameMapping = map[string]string{
 	"packt":                            "Packt",
 	"pearson":                          "Pearson",
 	"pragmatic":                        "Pragmatic",
+	"princeton":                        "Princeton",
 	"razeware":                         "Razeware",
 	"river publishers":                 "River",
 	"sams":                             "Sams",
