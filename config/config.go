@@ -25,6 +25,8 @@ const (
 	defaultMinioSecretAccessKey = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
 	defaultMinioUseSSL          = false
 
+	defaultLogFilePath = "lib_file_processor.log"
+
 	EnvVarKeyDBHost     = "DB_HOST"
 	EnvVarKeyDBUser     = "DB_USER"
 	EnvVarKeyDBPassword = "DB_PASSWORD"
@@ -51,7 +53,6 @@ func GetAppConfig() AppConfig {
 	bookInputFolder := defaultBookInputFolder
 	bookOutputFolder := defaultBookOutputFolder
 	coverOutputFolder := defaultCoverOutputFolder
-	logFilePath := "lib_file_processor.log"
 	if bookZipFolderVal, bookZipFolderValSet := os.LookupEnv(EnvVarDirInputZip); bookZipFolderValSet {
 		bookZipFolder = bookZipFolderVal
 	}
@@ -109,6 +110,7 @@ func GetAppConfig() AppConfig {
 		}
 	}
 
+	logFilePath := defaultLogFilePath
 	if logFilePathVal, logFilePathValSet := os.LookupEnv(EnvVarLogFilePath); logFilePathValSet {
 		logFilePath = logFilePathVal
 	}
@@ -132,6 +134,7 @@ func GetAppConfig() AppConfig {
 }
 
 func getDBConnectionString(DBHost, DBUser, DBPassword, DBName, DBSchema string) string {
+	// "postgres://postgres:postgres@localhost/sandbox?sslmode=disable&search_path=ebook"
 	return fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable&search_path=%s",
 		DBUser, DBPassword, DBHost, DBName, DBSchema)
 }

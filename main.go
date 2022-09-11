@@ -50,7 +50,7 @@ func main() {
 
 	// Try to connect to BLOB store
 	minioStore, minioStoreErr := filestore.NewMinioStore(appConfig.MinioEndpoint, appConfig.MinioAccessKeyID,
-		appConfig.MinioSecretAccessKey, appConfig.MinioUseSSL)
+		appConfig.MinioSecretAccessKey, appConfig.MinioUseSSL, logger)
 	if minioStoreErr != nil {
 		logger.Printf("[WARN] - Can not connect to Minio store: %v", err)
 	} else {

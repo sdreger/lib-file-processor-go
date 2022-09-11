@@ -117,7 +117,7 @@ func (c *core) StoreBook(parsedData *book.ParsedData, existingData *book.StoredD
 	}
 
 	// -------------------- Store book objects --------------------
-	if !c.Config.BlobStoreAvailable {
+	if c.Config.BlobStoreAvailable {
 		err := c.storeBookObjects(ctx, parsedData.BookFileName, parsedData.CoverFileName,
 			publisherLowerName, bookArchiveOutputPath, coverOutputPath)
 		if err != nil {

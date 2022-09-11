@@ -7,6 +7,7 @@ import (
 	"github.com/sdreger/lib-file-processor-go/config"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
+	"log"
 	"path/filepath"
 	"testing"
 )
@@ -123,7 +124,7 @@ func createMinioContainer(ctx context.Context, t *testing.T) *minioContainer {
 	}
 
 	minioStore, err := NewMinioStore(fmt.Sprintf("%s:%s", ip, port.Port()), appConfig.MinioAccessKeyID,
-		appConfig.MinioSecretAccessKey, appConfig.MinioUseSSL)
+		appConfig.MinioSecretAccessKey, appConfig.MinioUseSSL, log.Default())
 	if err != nil {
 		t.Fatalf("\t\t%s\tShould be able to create a Minio store: %s", failed, err)
 	}
