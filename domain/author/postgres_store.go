@@ -11,11 +11,15 @@ import (
 )
 
 type PostgresStore struct {
-	db *sql.DB
+	db     *sql.DB
+	logger *log.Logger
 }
 
-func NewPostgresStore(db *sql.DB) PostgresStore {
-	return PostgresStore{db: db}
+func NewPostgresStore(db *sql.DB, logger *log.Logger) PostgresStore {
+	return PostgresStore{
+		db:     db,
+		logger: logger,
+	}
 }
 
 // UpsertAll adds new authors from the input slice, existing authors are ignored.
@@ -32,13 +36,13 @@ func (s PostgresStore) UpsertAll(ctx context.Context, authors []string) ([]int64
 		if err != nil {
 			return err
 		}
-		defer closeResource(stmt)
+		defer s.closeResource(stmt)
 
 		rows, err := stmt.QueryContext(txCtx, pq.Array(authors))
 		if err != nil {
 			return err
 		}
-		defer closeResource(rows)
+		defer s.closeResource(rows)
 
 		for rows.Next() {
 			var ID int64
@@ -54,7 +58,7 @@ func (s PostgresStore) UpsertAll(ctx context.Context, authors []string) ([]int64
 		if err != nil {
 			return err
 		}
-		defer closeResource(stmt)
+		defer s.closeResource(stmt)
 
 		for _, author := range authors {
 			if existingID, ok := existingAuthors[author]; ok {
@@ -74,6 +78,7 @@ func (s PostgresStore) UpsertAll(ctx context.Context, authors []string) ([]int64
 	if err != nil {
 		return nil, err
 	}
+	s.logger.Printf("[INFO] - Stored author IDs: %d", ret)
 
 	return ret, nil
 }
@@ -90,7 +95,7 @@ func (s PostgresStore) ReplaceBookAuthors(ctx context.Context, bookID int64, aut
 		if err != nil {
 			return err
 		}
-		defer closeResource(deleteStmt)
+		defer s.closeResource(deleteStmt)
 
 		_, err = deleteStmt.ExecContext(txCtx, bookID)
 		if err != nil {
@@ -101,7 +106,7 @@ func (s PostgresStore) ReplaceBookAuthors(ctx context.Context, bookID int64, aut
 		if err != nil {
 			return err
 		}
-		defer closeResource(insertStmt)
+		defer s.closeResource(insertStmt)
 
 		for _, authorID := range authorIDs {
 			_, err := insertStmt.ExecContext(txCtx, bookID, authorID)
@@ -114,9 +119,9 @@ func (s PostgresStore) ReplaceBookAuthors(ctx context.Context, bookID int64, aut
 	})
 }
 
-func closeResource(rows io.Closer) {
+func (s PostgresStore) closeResource(rows io.Closer) {
 	err := rows.Close()
 	if err != nil {
-		log.Printf("[ERROR] - %v", err)
+		s.logger.Printf("[ERROR] - %v", err)
 	}
 }

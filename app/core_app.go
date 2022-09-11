@@ -27,16 +27,18 @@ type core struct {
 	BookDiskStore    filestore.DiskStore
 	BookBlobStore    filestore.BlobStore
 	BookDataScrapper scrapper.BookDataScrapper
+	Logger           *log.Logger
 }
 
 func NewCore(config config.AppConfig, bookDBStore book.Store, blobStore filestore.BlobStore,
-	diskStoreService filestore.DiskStore, bookDataScrapper scrapper.BookDataScrapper) *core {
+	diskStoreService filestore.DiskStore, bookDataScrapper scrapper.BookDataScrapper, logger *log.Logger) *core {
 	return &core{
 		Config:           config,
 		BookDBStore:      bookDBStore,
 		BookDiskStore:    diskStoreService,
 		BookBlobStore:    blobStore,
 		BookDataScrapper: bookDataScrapper,
+		Logger:           logger,
 	}
 }
 
@@ -49,13 +51,13 @@ func (c *core) PrepareBook(bookIDString string) (*book.ParsedData, *book.StoredD
 	// -------------------- Parse book page --------------------
 	parsedData, err := c.BookDataScrapper.GetBookData(bookIDString)
 	if err != nil {
-		log.Fatalf("Can not scrape a book metadata: %v", err)
+		c.Logger.Fatalf("Can not scrape a book metadata: %v", err)
 	}
 
 	// -------------------- Check if there are book files --------------------
 	folderIsEmpty, err := c.BookDiskStore.IsFolderEmpty(c.Config.BookInputFolder)
 	if err != nil {
-		log.Fatalf("Can not check if input folder is empty: %v", err)
+		c.Logger.Fatalf("Can not check if input folder is empty: %v", err)
 	}
 
 	if c.Config.DBAvailable {
@@ -63,7 +65,7 @@ func (c *core) PrepareBook(bookIDString string) (*book.ParsedData, *book.StoredD
 		ctx := context.Background()
 		existingData, err = c.findExistingBook(ctx, parsedData)
 		if err != nil {
-			log.Fatalf("Failed to find a book: %v", err)
+			c.Logger.Fatalf("Failed to find a book: %v", err)
 		}
 	}
 
@@ -71,16 +73,16 @@ func (c *core) PrepareBook(bookIDString string) (*book.ParsedData, *book.StoredD
 	// If there are no files in the input folder, just copy a book file name to the system clipboard
 	if folderIsEmpty || c.Config.IsStatelessMode() {
 		c.copyToClipboard(parsedData.GetBookFileNameWithoutExtension())
-		//log.Printf("[INFO] - The book file name is copied to clipboard: %s",
+		//c.Logger.Printf("[INFO] - The book file name is copied to clipboard: %s",
 		//	parsedData.BookFileName
-		//log.Printf("[WARN] - Attention, there are no book files! Skipping further processing!")
+		//c.Logger.Printf("[WARN] - Attention, there are no book files! Skipping further processing!")
 		return &parsedData, existingData, nil
 	}
 
 	// -------------------- Prepare book files --------------------
 	tempFilesData, err := c.BookDiskStore.PrepareBookFiles(parsedData, c.Config.BookInputFolder, c.Config.TempInputFolder)
 	if err != nil {
-		log.Fatalf("Can not prepare book files: %v", err)
+		c.Logger.Fatalf("Can not prepare book files: %v", err)
 	}
 	parsedData.BookFileSize = tempFilesData.BookSize
 	parsedData.Formats = tempFilesData.BookFormats
@@ -99,7 +101,7 @@ func (c *core) StoreBook(parsedData *book.ParsedData, existingData *book.StoredD
 	// -------------------- Store book files --------------------
 	err := c.storeBookFiles(tempData, bookArchiveOutputPath, coverOutputPath)
 	if err != nil {
-		log.Fatalf("Can not store book files: %v", err)
+		c.Logger.Fatalf("Can not store book files: %v", err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -108,18 +110,18 @@ func (c *core) StoreBook(parsedData *book.ParsedData, existingData *book.StoredD
 	if c.Config.DBAvailable {
 		bookID, err := c.upsertBook(ctx, parsedData, existingData)
 		if err != nil {
-			log.Fatalf("Can not upsert a book: %v", err)
+			c.Logger.Fatalf("Can not upsert a book: %v", err)
 		}
 		_ = bookID
 		//fmt.Println("Stored / Updated book ID:", bookID)
 	}
 
 	// -------------------- Store book objects --------------------
-	if c.Config.BlobStoreAvailable {
+	if !c.Config.BlobStoreAvailable {
 		err := c.storeBookObjects(ctx, parsedData.BookFileName, parsedData.CoverFileName,
 			publisherLowerName, bookArchiveOutputPath, coverOutputPath)
 		if err != nil {
-			log.Fatalf("Can not store book objects: %v", err)
+			c.Logger.Fatalf("Can not store book objects: %v", err)
 		}
 	}
 
@@ -132,7 +134,7 @@ func (c *core) getBookID() string {
 
 	bookIDInput, err := reader.ReadString(c.Config.NewLineDelimiter)
 	if err != nil {
-		log.Fatalf("Can not get book identifier: %v", err)
+		c.Logger.Fatalf("Can not get book identifier: %v", err)
 	}
 	return strings.TrimSpace(bookIDInput[:len(bookIDInput)-1])
 }
@@ -155,7 +157,7 @@ func (c *core) findExistingBook(ctx context.Context, parsedData book.ParsedData)
 func (c *core) copyToClipboard(str string) {
 	err := clipboard.WriteAll(str)
 	if err != nil {
-		log.Fatalf("Can not write to clipboard: %v", err)
+		c.Logger.Fatalf("Can not write to clipboard: %v", err)
 	}
 }
 
@@ -201,14 +203,14 @@ func (c *core) storeBookObjects(ctx context.Context, bookFileName, coverFileName
 	objectKey := fmt.Sprintf("%s/%s", publisherLowerName, bookFileName)
 	_, err := c.BookBlobStore.StoreObject(ctx, bookBucketName, objectKey, bookArchiveOutputPath)
 	if err != nil {
-		return fmt.Errorf("can not store a book BLOB: %w", err)
+		return fmt.Errorf("can not store a book BLOB for the object key: %q. %w", objectKey, err)
 	}
 
 	// -------------------- Store cover BLOB --------------------
 	objectKey = fmt.Sprintf("%s/%s", publisherLowerName, coverFileName)
 	_, err = c.BookBlobStore.StoreObject(ctx, coverBucketName, objectKey, coverOutputPath)
 	if err != nil {
-		return fmt.Errorf("xan not store a cover BLOB: %w", err)
+		return fmt.Errorf("can not store a cover BLOB for the object key: %q. %w", objectKey, err)
 	}
 
 	return nil

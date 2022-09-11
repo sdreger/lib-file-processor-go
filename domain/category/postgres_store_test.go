@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/lib/pq"
+	"log"
 	"testing"
 )
 
@@ -38,7 +39,7 @@ func testUpsertAllBothNew(t *testing.T) {
 
 	db, mock := initMockDB(t)
 	defer db.Close()
-	store := NewPostgresStore(db)
+	store := NewPostgresStore(db, log.Default())
 
 	mock.ExpectBegin()
 	selectPrepare := mock.ExpectPrepare("SELECT id, name, parent_id FROM ebook.categories WHERE name = ANY\\(\\$1\\)").
@@ -74,7 +75,7 @@ func testUpsertAllOneNew(t *testing.T) {
 
 	db, mock := initMockDB(t)
 	defer db.Close()
-	store := NewPostgresStore(db)
+	store := NewPostgresStore(db, log.Default())
 
 	mock.ExpectBegin()
 	selectPrepare := mock.ExpectPrepare("SELECT id, name, parent_id FROM ebook.categories WHERE name = ANY\\(\\$1\\)").
@@ -110,7 +111,7 @@ func testUpsertAllBothExisting(t *testing.T) {
 
 	db, mock := initMockDB(t)
 	defer db.Close()
-	store := NewPostgresStore(db)
+	store := NewPostgresStore(db, log.Default())
 
 	mock.ExpectBegin()
 	selectPrepare := mock.ExpectPrepare("SELECT id, name, parent_id FROM ebook.categories WHERE name = ANY\\(\\$1\\)").
@@ -140,7 +141,7 @@ func testUpsertAllBothExisting(t *testing.T) {
 func testUpsertAllNoCategories(t *testing.T) {
 	db, _ := initMockDB(t)
 	defer db.Close()
-	store := NewPostgresStore(db)
+	store := NewPostgresStore(db, log.Default())
 
 	categoryIDs, err := store.UpsertAll(context.Background(), []string{})
 	if err != nil {
@@ -168,7 +169,7 @@ func testReplaceBookCategories(t *testing.T) {
 
 	db, mock := initMockDB(t)
 	defer db.Close()
-	store := NewPostgresStore(db)
+	store := NewPostgresStore(db, log.Default())
 
 	mock.ExpectBegin()
 	deletePrepare := mock.ExpectPrepare("DELETE FROM ebook.book_category WHERE book_id = \\$1").WillBeClosed()
@@ -192,7 +193,7 @@ func testReplaceBookCategories(t *testing.T) {
 func testReplaceBookCategoriesErrorNoCategories(t *testing.T) {
 	db, _ := initMockDB(t)
 	defer db.Close()
-	store := NewPostgresStore(db)
+	store := NewPostgresStore(db, log.Default())
 
 	err := store.ReplaceBookCategories(context.Background(), testBookID, []int64{})
 	if err == nil {
@@ -205,7 +206,7 @@ func testReplaceBookCategoriesErrorNoCategories(t *testing.T) {
 func testReplaceBookCategoriesErrorNoBookID(t *testing.T) {
 	db, _ := initMockDB(t)
 	defer db.Close()
-	store := NewPostgresStore(db)
+	store := NewPostgresStore(db, log.Default())
 
 	err := store.ReplaceBookCategories(context.Background(), 0, []int64{1, 2})
 	if err == nil {

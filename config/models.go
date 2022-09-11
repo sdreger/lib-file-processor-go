@@ -17,6 +17,8 @@ type AppConfig struct {
 
 	DBAvailable        bool
 	BlobStoreAvailable bool
+
+	LogFilePath string
 }
 
 func (a AppConfig) IsStatelessMode() bool {

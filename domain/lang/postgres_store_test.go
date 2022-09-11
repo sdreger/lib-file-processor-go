@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"github.com/DATA-DOG/go-sqlmock"
+	"log"
 	"testing"
 )
 
@@ -32,7 +33,7 @@ func testUpsertOneNew(t *testing.T) {
 
 	db, mock := initMockDB(t)
 	defer db.Close()
-	store := NewPostgresStore(db)
+	store := NewPostgresStore(db, log.Default())
 
 	mock.ExpectBegin()
 	selectPrepare := mock.ExpectPrepare("SELECT id FROM ebook.languages WHERE name = \\$1").
@@ -67,7 +68,7 @@ func testUpsertOneExisting(t *testing.T) {
 
 	db, mock := initMockDB(t)
 	defer db.Close()
-	store := NewPostgresStore(db)
+	store := NewPostgresStore(db, log.Default())
 
 	mock.ExpectBegin()
 	selectPrepare := mock.ExpectPrepare("SELECT id FROM ebook.languages WHERE name = \\$1").
@@ -96,7 +97,7 @@ func testUpsertOneExisting(t *testing.T) {
 func testUpsertNoLanguage(t *testing.T) {
 	db, _ := initMockDB(t)
 	defer db.Close()
-	store := NewPostgresStore(db)
+	store := NewPostgresStore(db, log.Default())
 
 	languageID, err := store.Upsert(context.Background(), "")
 	if err == nil {

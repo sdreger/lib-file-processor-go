@@ -28,7 +28,7 @@ func TestMinioStore_CreateBucket(t *testing.T) {
 	minioContainer := createMinioContainer(ctx, t)
 	defer minioContainer.Terminate(ctx)
 
-	bucketExists, err := minioContainer.BlobStore.Client.BucketExists(ctx, testBucketName)
+	bucketExists, err := minioContainer.BlobStore.client.BucketExists(ctx, testBucketName)
 	if err != nil {
 		t.Fatalf("\t\t%s\tShould be able to check if Minio bucket exists: %s", failed, err)
 	}
@@ -42,7 +42,7 @@ func TestMinioStore_CreateBucket(t *testing.T) {
 		t.Fatalf("\t\t%s\tShould be able to Minio bucket: %s", failed, err)
 	}
 
-	bucketExists, err = minioContainer.BlobStore.Client.BucketExists(ctx, testBucketName)
+	bucketExists, err = minioContainer.BlobStore.client.BucketExists(ctx, testBucketName)
 	if err != nil {
 		t.Fatalf("\t\t%s\tShould be able to check if Minio bucket exists: %s", failed, err)
 	}
@@ -76,7 +76,7 @@ func TestMinioStore_StoreObject(t *testing.T) {
 	}
 
 	var fileExists bool
-	objects := minioContainer.BlobStore.Client.ListObjects(ctx, testBucketName, minio.ListObjectsOptions{})
+	objects := minioContainer.BlobStore.client.ListObjects(ctx, testBucketName, minio.ListObjectsOptions{})
 	for file := range objects {
 		if file.Size == 0 || file.Key != testFileName {
 			t.Fatalf("\t\t%s\tThe bucket should contain %q file", failed, testFileName)

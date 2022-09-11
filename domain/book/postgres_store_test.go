@@ -11,6 +11,7 @@ import (
 	"github.com/sdreger/lib-file-processor-go/domain/lang"
 	"github.com/sdreger/lib-file-processor-go/domain/publisher"
 	"github.com/sdreger/lib-file-processor-go/domain/tag"
+	"log"
 	"testing"
 	"time"
 )
@@ -65,7 +66,7 @@ func TestPostgresStore_Find(t *testing.T) {
 	mockFileTypeStore := filetype.NewMockStore(ctrl)
 	mockTagStore := tag.NewMockStore(ctrl)
 	store := NewPostgresStore(db, mockPublisherStore, mockLanguageStore, mockAuthorStore, mockCategoryStore,
-		mockFileTypeStore, mockTagStore)
+		mockFileTypeStore, mockTagStore, log.Default())
 
 	rows := sqlmock.NewRows([]string{
 		"id", "title", "subtitle", "description", "isbn10", "isbn13", "asin", "pages", "lang_name", "pub_name",
@@ -212,7 +213,7 @@ func TestPostgresStore_Add(t *testing.T) {
 		Return(nil).Times(1)
 
 	store := NewPostgresStore(db, mockPublisherStore, mockLanguageStore, mockAuthorStore, mockCategoryStore,
-		mockFileTypeStore, mockTagStore)
+		mockFileTypeStore, mockTagStore, log.Default())
 
 	mock.ExpectBegin()
 
@@ -282,7 +283,7 @@ func TestPostgresStore_Update(t *testing.T) {
 		Return(nil).Times(1)
 
 	store := NewPostgresStore(db, mockPublisherStore, mockLanguageStore, mockAuthorStore, mockCategoryStore,
-		mockFileTypeStore, mockTagStore)
+		mockFileTypeStore, mockTagStore, log.Default())
 
 	mock.ExpectBegin()
 

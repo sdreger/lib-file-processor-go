@@ -2,6 +2,7 @@ package filestore
 
 import (
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 	"testing"
@@ -13,7 +14,6 @@ func TestCompressBookFiles(t *testing.T) {
 	inputFileName01 := "input1.pdf"
 	inputFileName02 := "input2.epub"
 
-	t.Log("Given the need to test book files compression.")
 	tempInputDir, err := os.MkdirTemp("", "input-dir-*")
 	if err != nil {
 		t.Fatalf("\t\t%s\tShould be able to create input folder: %v", failed, err)
@@ -36,7 +36,7 @@ func TestCompressBookFiles(t *testing.T) {
 	}
 
 	archiveFilePath, filesInArchive, err :=
-		NewCompressionService().CompressBookFiles(tempInputDir, tempOutputDir, archiveFileName)
+		NewCompressionService(log.Default()).CompressBookFiles(tempInputDir, tempOutputDir, archiveFileName)
 	if err != nil {
 		t.Fatalf("\t\t%s\tShould be able to comress book files: %v", failed, err)
 	}
@@ -97,7 +97,7 @@ func TestExtractBookFiles(t *testing.T) {
 	}
 	defer os.RemoveAll(tempOutputDir)
 
-	err = NewCompressionService().ExtractZipFile(tempZipFile.Name(), tempOutputDir)
+	err = NewCompressionService(log.Default()).ExtractZipFile(tempZipFile.Name(), tempOutputDir)
 	if err != nil {
 		t.Fatalf("\t\t%s\tShould be able to extract zip file: %v", failed, err)
 	}

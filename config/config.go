@@ -41,6 +41,8 @@ const (
 	EnvVarDirInputBook     = "DIR_INPUT_BOOK"
 	EnvVarDirOutputArchive = "DIR_OUTPUT_ARCHIVE"
 	EnvVarDirOutputCover   = "DIR_OUTPUT_COVER"
+
+	EnvVarLogFilePath = "LOG_FILE_PATH"
 )
 
 func GetAppConfig() AppConfig {
@@ -49,6 +51,7 @@ func GetAppConfig() AppConfig {
 	bookInputFolder := defaultBookInputFolder
 	bookOutputFolder := defaultBookOutputFolder
 	coverOutputFolder := defaultCoverOutputFolder
+	logFilePath := "lib_file_processor.log"
 	if bookZipFolderVal, bookZipFolderValSet := os.LookupEnv(EnvVarDirInputZip); bookZipFolderValSet {
 		bookZipFolder = bookZipFolderVal
 	}
@@ -106,6 +109,10 @@ func GetAppConfig() AppConfig {
 		}
 	}
 
+	if logFilePathVal, logFilePathValSet := os.LookupEnv(EnvVarLogFilePath); logFilePathValSet {
+		logFilePath = logFilePathVal
+	}
+
 	return AppConfig{
 		ZipInputFolder:       bookZipFolder,
 		BookInputFolder:      bookInputFolder,
@@ -120,6 +127,7 @@ func GetAppConfig() AppConfig {
 		MinioUseSSL:          MinioUseSSL,
 		DBAvailable:          false,
 		BlobStoreAvailable:   false,
+		LogFilePath:          logFilePath,
 	}
 }
 

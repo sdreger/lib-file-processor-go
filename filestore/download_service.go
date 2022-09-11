@@ -8,10 +8,14 @@ import (
 	"path/filepath"
 )
 
-type DownloadService struct{}
+type DownloadService struct {
+	logger *log.Logger
+}
 
-func NewDownloadService() DownloadService {
-	return DownloadService{}
+func NewDownloadService(logger *log.Logger) DownloadService {
+	return DownloadService{
+		logger: logger,
+	}
 }
 
 // DownloadCoverFile downloads a book cover file from a remote URL,
@@ -22,13 +26,13 @@ func (ds DownloadService) DownloadCoverFile(coverURL, coverOutputFolder, coverFi
 	if err != nil {
 		return "", err
 	}
-	defer closeResource(cover)
+	defer ds.closeResource(cover)
 
 	response, err := http.Get(coverURL)
 	if err != nil {
 		return "", err
 	}
-	defer closeResponseBody(response.Body)
+	defer ds.closeResponseBody(response.Body)
 
 	writtenBytes, err := io.Copy(cover, response.Body)
 	if err != nil {
@@ -38,14 +42,21 @@ func (ds DownloadService) DownloadCoverFile(coverURL, coverOutputFolder, coverFi
 	if err = cover.Sync(); err != nil {
 		return "", err
 	}
-	log.Printf("[INFO] - Written %d bytes of book cover", writtenBytes)
+	ds.logger.Printf("[INFO] - Written %d bytes of book cover", writtenBytes)
 
 	return bookCoverOutputPath, err
 }
 
-func closeResponseBody(f io.Closer) {
+func (ds DownloadService) closeResponseBody(f io.Closer) {
 	err := f.Close()
 	if err != nil {
-		log.Fatal(err.Error())
+		ds.logger.Fatal(err.Error())
+	}
+}
+
+func (ds DownloadService) closeResource(f io.Closer) {
+	err := f.Close()
+	if err != nil {
+		ds.logger.Fatal(err.Error())
 	}
 }

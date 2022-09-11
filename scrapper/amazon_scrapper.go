@@ -16,7 +16,8 @@ import (
 const (
 	defaultBasePath = "https://www.amazon.com/dp/"
 
-	userAgentSafari = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.3 Safari/605.1.15"
+	//userAgentSafari = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.3 Safari/605.1.15"
+	userAgentEdge = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.134 Safari/537.36 Edg/103.0.1264.77"
 
 	publisherKey         = "Publisher"
 	editionKey           = "Edition"
@@ -48,9 +49,10 @@ type AmazonScrapper struct {
 	cookieJar       *cookiejar.Jar
 	collector       *colly.Collector
 	scrappedRawData *scrappedRawData
+	logger          *log.Logger
 }
 
-func NewAmazonScrapper(basePath string) (*AmazonScrapper, error) {
+func NewAmazonScrapper(basePath string, logger *log.Logger) (*AmazonScrapper, error) {
 	if basePath == "" || !(strings.HasPrefix(basePath, "http") || strings.HasPrefix(basePath, "file")) {
 		basePath = defaultBasePath
 	}
@@ -63,21 +65,26 @@ func NewAmazonScrapper(basePath string) (*AmazonScrapper, error) {
 	collector := colly.NewCollector()
 	collector.AllowURLRevisit = true
 	//extensions.RandomUserAgent(collector)
-	collector.UserAgent = userAgentSafari
+	collector.UserAgent = userAgentEdge
 	collector.SetCookieJar(cookieJar)
 
 	scrappedRawData := newScrappedRawData()
-	initCallbacks(collector, &scrappedRawData)
+	initCallbacks(collector, &scrappedRawData, logger)
 
 	return &AmazonScrapper{
 		basePath:        basePath,
 		cookieJar:       cookieJar,
 		collector:       collector,
 		scrappedRawData: &scrappedRawData,
+		logger:          logger,
 	}, nil
 }
 
-func initCallbacks(collector *colly.Collector, scrappedRawData *scrappedRawData) {
+func initCallbacks(collector *colly.Collector, scrappedRawData *scrappedRawData, logger *log.Logger) {
+
+	collector.OnRequest(func(request *colly.Request) {
+		logger.Printf("[INFO] - Visiting: %q, using 'User-Agent': %q", request.URL, request.Headers.Get("User-Agent"))
+	})
 
 	collector.OnHTML(bookTitleSelector, func(element *colly.HTMLElement) {
 		scrappedRawData.titleString = strings.TrimSpace(element.Text)
@@ -178,7 +185,7 @@ func (s *AmazonScrapper) GetBookData(bookID string) (book.ParsedData, error) {
 	// -------------------- Book publisher metadata --------------------
 	publishMeta, err := parser.ParsePublisherString(detailsBlock[publisherKey])
 	if err != nil {
-		log.Printf("[WARN] - %v", err)
+		s.logger.Printf("[WARN] - %v", err)
 	}
 
 	// -------------------- Book ISBN10 --------------------

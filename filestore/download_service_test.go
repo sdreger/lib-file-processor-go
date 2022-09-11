@@ -2,6 +2,7 @@ package filestore
 
 import (
 	"io"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -26,7 +27,8 @@ func TestDownloadCoverFile(t *testing.T) {
 	}
 	defer os.RemoveAll(tempDir)
 
-	filePath, err := NewDownloadService().DownloadCoverFile(server.URL+coverFileURL, tempDir, coverFileName)
+	filePath, err := NewDownloadService(log.Default()).
+		DownloadCoverFile(server.URL+coverFileURL, tempDir, coverFileName)
 	if err != nil || filePath == "" {
 		t.Fatalf("\t\t%s\tShould be able to download a cover file: %v", failed, err)
 	}

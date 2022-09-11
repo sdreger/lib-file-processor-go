@@ -7,6 +7,7 @@ import (
 	"github.com/sdreger/lib-file-processor-go/domain/book"
 	"github.com/sdreger/lib-file-processor-go/filestore"
 	"github.com/sdreger/lib-file-processor-go/scrapper"
+	"log"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -55,7 +56,7 @@ func testWithBookAndWithFiles(t *testing.T) {
 	mockDiskStore.EXPECT().PrepareBookFiles(testParsedData, appConfig.BookInputFolder, appConfig.TempInputFolder).
 		Return(testTempFilesData, nil).Times(1)
 
-	coreApp := NewCore(appConfig, mockBookDBStore, mockBlobStore, mockDiskStore, mockBookDataScrapper)
+	coreApp := NewCore(appConfig, mockBookDBStore, mockBlobStore, mockDiskStore, mockBookDataScrapper, log.Default())
 
 	updatedParsedData, storedData, tempFilesData := coreApp.PrepareBook(testBookID)
 
@@ -109,7 +110,7 @@ func testWithoutBookAndWithFiles(t *testing.T) {
 	mockDiskStore.EXPECT().PrepareBookFiles(testParsedData, appConfig.BookInputFolder, appConfig.TempInputFolder).
 		Return(testTempFilesData, nil).Times(1)
 
-	coreApp := NewCore(appConfig, mockBookDBStore, mockBlobStore, mockDiskStore, mockBookDataScrapper)
+	coreApp := NewCore(appConfig, mockBookDBStore, mockBlobStore, mockDiskStore, mockBookDataScrapper, log.Default())
 
 	updatedParsedData, storedData, tempFilesData := coreApp.PrepareBook(testBookID)
 
@@ -160,7 +161,7 @@ func testWithBookAndWithoutFiles(t *testing.T) {
 	// book files not present
 	mockDiskStore.EXPECT().IsFolderEmpty(appConfig.BookInputFolder).Return(true, nil).Times(1)
 
-	coreApp := NewCore(appConfig, mockBookDBStore, mockBlobStore, mockDiskStore, mockBookDataScrapper)
+	coreApp := NewCore(appConfig, mockBookDBStore, mockBlobStore, mockDiskStore, mockBookDataScrapper, log.Default())
 
 	updatedParsedData, storedData, tempFilesData := coreApp.PrepareBook(testBookID)
 
@@ -210,7 +211,7 @@ func testWithoutBookAndWithoutFiles(t *testing.T) {
 	// book files not present
 	mockDiskStore.EXPECT().IsFolderEmpty(appConfig.BookInputFolder).Return(true, nil).Times(1)
 
-	coreApp := NewCore(appConfig, mockBookDBStore, mockBlobStore, mockDiskStore, mockBookDataScrapper)
+	coreApp := NewCore(appConfig, mockBookDBStore, mockBlobStore, mockDiskStore, mockBookDataScrapper, log.Default())
 
 	updatedParsedData, storedData, tempFilesData := coreApp.PrepareBook(testBookID)
 
@@ -272,7 +273,7 @@ func testWithExistingData(t *testing.T) {
 		gomock.Eq(fmt.Sprintf("%s/%s", lowerPublisher, testParsedData.CoverFileName)), gomock.Eq(coverOutputPath)).
 		Return(testCoverEtag, nil).Times(1)
 
-	coreApp := NewCore(appConfig, mockBookDBStore, mockBlobStore, mockDiskStore, nil)
+	coreApp := NewCore(appConfig, mockBookDBStore, mockBlobStore, mockDiskStore, nil, log.Default())
 	coreApp.StoreBook(&testParsedData, &testStoredData, &testTempFilesData)
 }
 
@@ -309,6 +310,6 @@ func testWithoutExistingData(t *testing.T) {
 		gomock.Eq(fmt.Sprintf("%s/%s", lowerPublisher, testParsedData.CoverFileName)), gomock.Eq(coverOutputPath)).
 		Return(testCoverEtag, nil).Times(1)
 
-	coreApp := NewCore(appConfig, mockBookDBStore, mockBlobStore, mockDiskStore, nil)
+	coreApp := NewCore(appConfig, mockBookDBStore, mockBlobStore, mockDiskStore, nil, log.Default())
 	coreApp.StoreBook(&testParsedData, nil, &testTempFilesData)
 }

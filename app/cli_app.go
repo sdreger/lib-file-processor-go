@@ -19,28 +19,28 @@ type CliApp struct {
 	*core
 }
 
-func NewCliApp(config config.AppConfig, db *sql.DB, blobStore filestore.BlobStore) (CliApp, error) {
-	compressionService := filestore.NewCompressionService()
-	downloadService := filestore.NewDownloadService()
-	diskStoreService := filestore.NewDiskStoreService(compressionService, downloadService)
+func NewCliApp(config config.AppConfig, db *sql.DB, blobStore filestore.BlobStore, logger *log.Logger) (CliApp, error) {
+	compressionService := filestore.NewCompressionService(logger)
+	downloadService := filestore.NewDownloadService(logger)
+	diskStoreService := filestore.NewDiskStoreService(compressionService, downloadService, logger)
 
-	bookDataScrapper, err := scrapper.NewAmazonScrapper("")
+	bookDataScrapper, err := scrapper.NewAmazonScrapper("", logger)
 	if err != nil {
 		return CliApp{}, err
 	}
 
 	// initStores initializes all book-related stores
-	authorStore := author.NewPostgresStore(db)
-	categoryStore := category.NewPostgresStore(db)
-	fileTypeStore := filetype.NewPostgresStore(db)
-	tagStore := tag.NewPostgresStore(db)
-	publisherStore := publisher.NewPostgresStore(db)
-	languageStore := lang.NewPostgresStore(db)
+	authorStore := author.NewPostgresStore(db, logger)
+	categoryStore := category.NewPostgresStore(db, logger)
+	fileTypeStore := filetype.NewPostgresStore(db, logger)
+	tagStore := tag.NewPostgresStore(db, logger)
+	publisherStore := publisher.NewPostgresStore(db, logger)
+	languageStore := lang.NewPostgresStore(db, logger)
 	bookDBStore := book.
-		NewPostgresStore(db, publisherStore, languageStore, authorStore, categoryStore, fileTypeStore, tagStore)
+		NewPostgresStore(db, publisherStore, languageStore, authorStore, categoryStore, fileTypeStore, tagStore, logger)
 
 	return CliApp{
-		core: NewCore(config, bookDBStore, blobStore, diskStoreService, bookDataScrapper),
+		core: NewCore(config, bookDBStore, blobStore, diskStoreService, bookDataScrapper, logger),
 	}, nil
 }
 
@@ -52,9 +52,9 @@ func (a CliApp) Run() {
 		// -------------------- Parse book page and prepare book files --------------------
 		parsedData, existingData, tempFilesData := a.PrepareBook(bookIDString)
 		if tempFilesData == nil {
-			log.Printf("[INFO] - The book file name is copied to clipboard: %s",
+			a.core.Logger.Printf("[INFO] - The book file name is copied to clipboard: %s",
 				parsedData.GetBookFileNameWithoutExtension())
-			log.Printf("[WARN] - Attention, there are no book files! Skipping further processing!")
+			a.core.Logger.Printf("[WARN] - Attention, there are no book files! Skipping further processing!")
 			continue
 		}
 

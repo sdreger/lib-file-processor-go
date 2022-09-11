@@ -10,11 +10,15 @@ import (
 )
 
 type PostgresStore struct {
-	db *sql.DB
+	db     *sql.DB
+	logger *log.Logger
 }
 
-func NewPostgresStore(db *sql.DB) PostgresStore {
-	return PostgresStore{db: db}
+func NewPostgresStore(db *sql.DB, logger *log.Logger) PostgresStore {
+	return PostgresStore{
+		db:     db,
+		logger: logger,
+	}
 }
 
 // Upsert adds a new publisher to DB if it doesn't exist.
@@ -30,12 +34,12 @@ func (s PostgresStore) Upsert(ctx context.Context, publisher string) (int64, err
 		if err != nil {
 			return err
 		}
-		defer closeResource(selectStmt)
+		defer s.closeResource(selectStmt)
 
 		row := selectStmt.QueryRowContext(txCtx, publisher)
 		err = row.Scan(&publisherID)
 		if err == nil {
-			log.Printf("[INFO] - Existing publisher ID: %d", publisherID)
+			s.logger.Printf("[INFO] - Existing publisher ID: %d", publisherID)
 			return nil
 		}
 		if err != sql.ErrNoRows {
@@ -46,7 +50,7 @@ func (s PostgresStore) Upsert(ctx context.Context, publisher string) (int64, err
 		if err != nil {
 			return err
 		}
-		defer closeResource(insertStmt)
+		defer s.closeResource(insertStmt)
 
 		if err := insertStmt.QueryRowContext(txCtx, publisher).Scan(&publisherID); err != nil {
 			return err
@@ -58,14 +62,14 @@ func (s PostgresStore) Upsert(ctx context.Context, publisher string) (int64, err
 	if err != nil {
 		return 0, err
 	}
-	log.Printf("[INFO] - Stored publisher ID: %d", publisherID)
+	s.logger.Printf("[INFO] - Stored publisher ID: %d", publisherID)
 
 	return publisherID, nil
 }
 
-func closeResource(rows io.Closer) {
+func (s PostgresStore) closeResource(rows io.Closer) {
 	err := rows.Close()
 	if err != nil {
-		log.Printf("[ERROR] - %v", err)
+		s.logger.Printf("[ERROR] - %v", err)
 	}
 }

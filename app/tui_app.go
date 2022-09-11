@@ -15,6 +15,7 @@ import (
 	"github.com/sdreger/lib-file-processor-go/domain/tag"
 	"github.com/sdreger/lib-file-processor-go/filestore"
 	"github.com/sdreger/lib-file-processor-go/scrapper"
+	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -45,28 +46,29 @@ type TuiApp struct {
 	editErrorMap map[string]error
 }
 
-func NewTuiApp(config config.AppConfig, db *sql.DB, blobStore filestore.BlobStore, bookIDChan <-chan string) (*TuiApp, error) {
-	compressionService := filestore.NewCompressionService()
-	downloadService := filestore.NewDownloadService()
-	diskStoreService := filestore.NewDiskStoreService(compressionService, downloadService)
+func NewTuiApp(config config.AppConfig, db *sql.DB, blobStore filestore.BlobStore, logger *log.Logger,
+	bookIDChan <-chan string) (*TuiApp, error) {
+	compressionService := filestore.NewCompressionService(logger)
+	downloadService := filestore.NewDownloadService(logger)
+	diskStoreService := filestore.NewDiskStoreService(compressionService, downloadService, logger)
 
-	bookDataScrapper, err := scrapper.NewAmazonScrapper("")
+	bookDataScrapper, err := scrapper.NewAmazonScrapper("", logger)
 	if err != nil {
 		return nil, err
 	}
 
 	// initStores initializes all book-related stores
-	authorStore := author.NewPostgresStore(db)
-	categoryStore := category.NewPostgresStore(db)
-	fileTypeStore := filetype.NewPostgresStore(db)
-	tagStore := tag.NewPostgresStore(db)
-	publisherStore := publisher.NewPostgresStore(db)
-	languageStore := lang.NewPostgresStore(db)
+	authorStore := author.NewPostgresStore(db, logger)
+	categoryStore := category.NewPostgresStore(db, logger)
+	fileTypeStore := filetype.NewPostgresStore(db, logger)
+	tagStore := tag.NewPostgresStore(db, logger)
+	publisherStore := publisher.NewPostgresStore(db, logger)
+	languageStore := lang.NewPostgresStore(db, logger)
 	bookDBStore := book.
-		NewPostgresStore(db, publisherStore, languageStore, authorStore, categoryStore, fileTypeStore, tagStore)
+		NewPostgresStore(db, publisherStore, languageStore, authorStore, categoryStore, fileTypeStore, tagStore, logger)
 
 	return &TuiApp{
-		core:          NewCore(config, bookDBStore, blobStore, diskStoreService, bookDataScrapper),
+		core:          NewCore(config, bookDBStore, blobStore, diskStoreService, bookDataScrapper, logger),
 		bookIDChan:    bookIDChan,
 		tuiApp:        tview.NewApplication(),
 		grid:          tview.NewGrid(),

@@ -3,6 +3,7 @@ package filestore
 import (
 	"github.com/golang/mock/gomock"
 	"github.com/sdreger/lib-file-processor-go/domain/book"
+	"log"
 	"os"
 	"path/filepath"
 	"testing"
@@ -23,7 +24,7 @@ func TestDiskFileStore_PrepareBookFiles(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	mockCoverDownloader := NewMockCoverDownloader(mockCtrl)
 	mockBookCompressor := NewMockBookCompressor(mockCtrl)
-	diskStore := NewDiskStoreService(mockBookCompressor, mockCoverDownloader)
+	diskStore := NewDiskStoreService(mockBookCompressor, mockCoverDownloader, log.Default())
 	defer mockCtrl.Finish()
 
 	tempOutputDir, err := os.MkdirTemp("", "output-dir-*")
@@ -85,7 +86,7 @@ func TestDiskStore_StoreBookArchive(t *testing.T) {
 
 func testStoreBookArchiveOutputFolderDoesNotExist(t *testing.T) {
 	outputSubDir := "sub"
-	diskStore := NewDiskStoreService(nil, nil)
+	diskStore := NewDiskStoreService(nil, nil, log.Default())
 
 	// Create book input folder with book files inside
 	bookInputDir := createBookInputFolder(t)
@@ -112,7 +113,7 @@ func testStoreBookArchiveOutputFolderDoesNotExist(t *testing.T) {
 
 func testStoreBookArchiveOutputFolderExists(t *testing.T) {
 
-	diskStore := NewDiskStoreService(nil, nil)
+	diskStore := NewDiskStoreService(nil, nil, log.Default())
 
 	// Create book input folder with book files inside
 	bookInputDir := createBookInputFolder(t)
@@ -212,7 +213,7 @@ func TestDiskStore_StoreCoverFile(t *testing.T) {
 
 func testStoreBookCoverOutputFolderDoesNotExist(t *testing.T) {
 
-	diskStore := NewDiskStoreService(nil, nil)
+	diskStore := NewDiskStoreService(nil, nil, log.Default())
 
 	// Create temp folder with an image file inside
 	coverTempDir := createCoverTempFolder(t)
@@ -235,7 +236,7 @@ func testStoreBookCoverOutputFolderDoesNotExist(t *testing.T) {
 
 func testStoreBookCoverOutputFolderExists(t *testing.T) {
 	outputSubDir := "sub"
-	diskStore := NewDiskStoreService(nil, nil)
+	diskStore := NewDiskStoreService(nil, nil, log.Default())
 
 	// Create temp folder with an image file inside
 	coverTempDir := createCoverTempFolder(t)
@@ -299,7 +300,7 @@ func assertCoverStoreFoldersContent(t *testing.T, coverTempDir, coverOutputDir s
 func TestDiskStore_IsFolderEmpty(t *testing.T) {
 
 	t.Log("Given the need to test book files preparing.")
-	diskStore := NewDiskStoreService(nil, nil)
+	diskStore := NewDiskStoreService(nil, nil, log.Default())
 
 	tempDir, err := os.MkdirTemp("", "temp-dir-to-check-content-*")
 	if err != nil {

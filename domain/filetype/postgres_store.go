@@ -11,11 +11,15 @@ import (
 )
 
 type PostgresStore struct {
-	db *sql.DB
+	db     *sql.DB
+	logger *log.Logger
 }
 
-func NewPostgresStore(db *sql.DB) PostgresStore {
-	return PostgresStore{db: db}
+func NewPostgresStore(db *sql.DB, logger *log.Logger) PostgresStore {
+	return PostgresStore{
+		db:     db,
+		logger: logger,
+	}
 }
 
 // UpsertAll adds new file types from the input slice, existing file types are ignored.
@@ -33,13 +37,13 @@ func (s PostgresStore) UpsertAll(ctx context.Context, fileTypes []string) ([]int
 		if err != nil {
 			return err
 		}
-		defer closeResource(selectStmt)
+		defer s.closeResource(selectStmt)
 
 		rows, err := selectStmt.QueryContext(txCtx, pq.Array(fileTypes))
 		if err != nil {
 			return err
 		}
-		defer closeResource(rows)
+		defer s.closeResource(rows)
 
 		for rows.Next() {
 			var ID int64
@@ -55,7 +59,7 @@ func (s PostgresStore) UpsertAll(ctx context.Context, fileTypes []string) ([]int
 		if err != nil {
 			return err
 		}
-		defer closeResource(insertStmt)
+		defer s.closeResource(insertStmt)
 
 		for _, fileType := range fileTypes {
 			if existingID, ok := existingFileTypes[fileType]; ok {
@@ -75,7 +79,7 @@ func (s PostgresStore) UpsertAll(ctx context.Context, fileTypes []string) ([]int
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("[INFO] - Stored fileType IDs: %d", ret)
+	s.logger.Printf("[INFO] - Stored fileType IDs: %d", ret)
 
 	return ret, nil
 }
@@ -92,7 +96,7 @@ func (s PostgresStore) ReplaceBookFileTypes(ctx context.Context, bookID int64, f
 		if err != nil {
 			return err
 		}
-		defer closeResource(deleteStmt)
+		defer s.closeResource(deleteStmt)
 
 		_, err = deleteStmt.ExecContext(txCtx, bookID)
 		if err != nil {
@@ -103,7 +107,7 @@ func (s PostgresStore) ReplaceBookFileTypes(ctx context.Context, bookID int64, f
 		if err != nil {
 			return err
 		}
-		defer closeResource(insertStmt)
+		defer s.closeResource(insertStmt)
 
 		for _, fileTypeID := range fileTypeIDs {
 			_, err := insertStmt.ExecContext(txCtx, bookID, fileTypeID)
@@ -116,9 +120,9 @@ func (s PostgresStore) ReplaceBookFileTypes(ctx context.Context, bookID int64, f
 	})
 }
 
-func closeResource(rows io.Closer) {
+func (s PostgresStore) closeResource(rows io.Closer) {
 	err := rows.Close()
 	if err != nil {
-		log.Printf("[ERROR] - %v", err)
+		s.logger.Printf("[ERROR] - %v", err)
 	}
 }

@@ -10,11 +10,15 @@ import (
 )
 
 type PostgresStore struct {
-	db *sql.DB
+	db     *sql.DB
+	logger *log.Logger
 }
 
-func NewPostgresStore(db *sql.DB) PostgresStore {
-	return PostgresStore{db: db}
+func NewPostgresStore(db *sql.DB, logger *log.Logger) PostgresStore {
+	return PostgresStore{
+		db:     db,
+		logger: logger,
+	}
 }
 
 // Upsert adds a new language to DB if it doesn't exist.
@@ -30,7 +34,7 @@ func (s PostgresStore) Upsert(ctx context.Context, language string) (int64, erro
 		if err != nil {
 			return err
 		}
-		defer closeResource(selectStmt)
+		defer s.closeResource(selectStmt)
 
 		row := selectStmt.QueryRowContext(txCtx, language)
 		err = row.Scan(&languageID)
@@ -46,12 +50,12 @@ func (s PostgresStore) Upsert(ctx context.Context, language string) (int64, erro
 		if err != nil {
 			return err
 		}
-		defer closeResource(insertStmt)
+		defer s.closeResource(insertStmt)
 
 		if err := insertStmt.QueryRowContext(txCtx, language).Scan(&languageID); err != nil {
 			return err
 		}
-		log.Printf("[INFO] - Stored language ID: %d", languageID)
+		s.logger.Printf("[INFO] - Stored language ID: %d", languageID)
 
 		return nil
 	})
@@ -63,9 +67,9 @@ func (s PostgresStore) Upsert(ctx context.Context, language string) (int64, erro
 	return languageID, nil
 }
 
-func closeResource(rows io.Closer) {
+func (s PostgresStore) closeResource(rows io.Closer) {
 	err := rows.Close()
 	if err != nil {
-		log.Printf("[ERROR] - %v", err)
+		s.logger.Printf("[ERROR] - %v", err)
 	}
 }

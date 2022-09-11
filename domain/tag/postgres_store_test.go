@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/lib/pq"
+	"log"
 	"testing"
 )
 
@@ -38,7 +39,7 @@ func testUpsertAllBothNew(t *testing.T) {
 
 	db, mock := initMockDB(t)
 	defer db.Close()
-	store := NewPostgresStore(db)
+	store := NewPostgresStore(db, log.Default())
 
 	mock.ExpectBegin()
 	selectPrepare := mock.ExpectPrepare("SELECT id, name FROM ebook.tags WHERE name = ANY\\(\\$1\\)").
@@ -74,7 +75,7 @@ func testUpsertAllOneNew(t *testing.T) {
 
 	db, mock := initMockDB(t)
 	defer db.Close()
-	store := NewPostgresStore(db)
+	store := NewPostgresStore(db, log.Default())
 
 	mock.ExpectBegin()
 	selectPrepare := mock.ExpectPrepare("SELECT id, name FROM ebook.tags WHERE name = ANY\\(\\$1\\)").
@@ -110,7 +111,7 @@ func testUpsertAllBothExisting(t *testing.T) {
 
 	db, mock := initMockDB(t)
 	defer db.Close()
-	store := NewPostgresStore(db)
+	store := NewPostgresStore(db, log.Default())
 
 	mock.ExpectBegin()
 	selectPrepare := mock.ExpectPrepare("SELECT id, name FROM ebook.tags WHERE name = ANY\\(\\$1\\)").
@@ -139,7 +140,7 @@ func testUpsertAllBothExisting(t *testing.T) {
 func testUpsertAllNoTags(t *testing.T) {
 	db, _ := initMockDB(t)
 	defer db.Close()
-	store := NewPostgresStore(db)
+	store := NewPostgresStore(db, log.Default())
 
 	tagIDs, err := store.UpsertAll(context.Background(), []string{})
 	if err != nil {
@@ -167,7 +168,7 @@ func testReplaceBookTags(t *testing.T) {
 
 	db, mock := initMockDB(t)
 	defer db.Close()
-	store := NewPostgresStore(db)
+	store := NewPostgresStore(db, log.Default())
 
 	mock.ExpectBegin()
 	deletePrepare := mock.ExpectPrepare("DELETE FROM ebook.book_tag WHERE book_id = \\$1").WillBeClosed()
@@ -191,7 +192,7 @@ func testReplaceBookTags(t *testing.T) {
 func testReplaceBookTagsErrorNoTags(t *testing.T) {
 	db, _ := initMockDB(t)
 	defer db.Close()
-	store := NewPostgresStore(db)
+	store := NewPostgresStore(db, log.Default())
 
 	err := store.ReplaceBookTags(context.Background(), testBookID, []int64{})
 	if err == nil {
@@ -204,7 +205,7 @@ func testReplaceBookTagsErrorNoTags(t *testing.T) {
 func testReplaceBookTagsErrorNoBookID(t *testing.T) {
 	db, _ := initMockDB(t)
 	defer db.Close()
-	store := NewPostgresStore(db)
+	store := NewPostgresStore(db, log.Default())
 
 	err := store.ReplaceBookTags(context.Background(), 0, []int64{1, 2})
 	if err == nil {

@@ -11,11 +11,15 @@ import (
 )
 
 type PostgresStore struct {
-	db *sql.DB
+	db     *sql.DB
+	logger *log.Logger
 }
 
-func NewPostgresStore(db *sql.DB) PostgresStore {
-	return PostgresStore{db: db}
+func NewPostgresStore(db *sql.DB, logger *log.Logger) PostgresStore {
+	return PostgresStore{
+		db:     db,
+		logger: logger,
+	}
 }
 
 // UpsertAll adds only new categories to DB, and returns the list of all storedData IDs from the input list.
@@ -34,13 +38,13 @@ func (s PostgresStore) UpsertAll(ctx context.Context, categories []string) ([]in
 		if err != nil {
 			return err
 		}
-		defer closeResource(stmt)
+		defer s.closeResource(stmt)
 
 		result, err := stmt.QueryContext(txCtx, pq.Array(categories))
 		if err != nil {
 			return err
 		}
-		defer closeResource(result)
+		defer s.closeResource(result)
 
 		for result.Next() {
 			var cat storedData
@@ -55,7 +59,7 @@ func (s PostgresStore) UpsertAll(ctx context.Context, categories []string) ([]in
 		if err != nil {
 			return err
 		}
-		defer closeResource(insertStmt)
+		defer s.closeResource(insertStmt)
 
 		for i, cat := range categories {
 			if existingCategory, ok := existingCategories[cat]; ok {
@@ -88,7 +92,7 @@ func (s PostgresStore) UpsertAll(ctx context.Context, categories []string) ([]in
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("[INFO] - Stored storedData IDs: %d", ret)
+	s.logger.Printf("[INFO] - Stored category IDs: %d", ret)
 
 	return ret, nil
 }
@@ -105,7 +109,7 @@ func (s PostgresStore) ReplaceBookCategories(ctx context.Context, bookID int64, 
 		if err != nil {
 			return err
 		}
-		defer closeResource(deleteStmt)
+		defer s.closeResource(deleteStmt)
 
 		_, err = deleteStmt.ExecContext(txCtx, bookID)
 		if err != nil {
@@ -116,7 +120,7 @@ func (s PostgresStore) ReplaceBookCategories(ctx context.Context, bookID int64, 
 		if err != nil {
 			return err
 		}
-		defer closeResource(insertStmt)
+		defer s.closeResource(insertStmt)
 
 		for _, categoryID := range categoryIDs {
 			_, err := insertStmt.ExecContext(txCtx, bookID, categoryID)
@@ -137,9 +141,9 @@ func getNullableInt64(val int64) sql.NullInt64 {
 	return nullInt64
 }
 
-func closeResource(rows io.Closer) {
+func (s PostgresStore) closeResource(rows io.Closer) {
 	err := rows.Close()
 	if err != nil {
-		log.Printf("[ERROR] - %v", err)
+		s.logger.Printf("[ERROR] - %v", err)
 	}
 }

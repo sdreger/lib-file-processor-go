@@ -53,7 +53,7 @@ func TestGetBookDataISBN10(t *testing.T) {
 	defer server.Close()
 
 	testBookPublisherURL := server.URL + "/" + testBookID01
-	amazonScrapper, err := NewAmazonScrapper(server.URL + "/")
+	amazonScrapper, err := NewAmazonScrapper(server.URL+"/", log.Default())
 	if err != nil {
 		log.Fatalln(err)
 	}

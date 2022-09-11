@@ -23,10 +23,11 @@ type PostgresStore struct {
 	categoryStore  category.Store
 	filetypeStore  filetype.Store
 	tagStore       tag.Store
+	logger         *log.Logger
 }
 
 func NewPostgresStore(db *sql.DB, publisherStore publisher.Store, languageStore lang.Store, authorStore author.Store,
-	categoryStore category.Store, filetypeStore filetype.Store, tagStore tag.Store) Store {
+	categoryStore category.Store, filetypeStore filetype.Store, tagStore tag.Store, logger *log.Logger) Store {
 	return PostgresStore{
 		db:             db,
 		publisherStore: publisherStore,
@@ -35,6 +36,7 @@ func NewPostgresStore(db *sql.DB, publisherStore publisher.Store, languageStore 
 		categoryStore:  categoryStore,
 		filetypeStore:  filetypeStore,
 		tagStore:       tagStore,
+		logger:         logger,
 	}
 }
 
@@ -66,13 +68,13 @@ func (s PostgresStore) Find(ctx context.Context, req SearchRequest) (*StoredData
 		if err != nil {
 			return err
 		}
-		defer closeResource(selectStmt)
+		defer s.closeResource(selectStmt)
 
 		rows, err := selectStmt.QueryContext(txCtx, req.Title, req.Edition, req.ISBN10, req.ISBN13, req.ASIN)
 		if err != nil {
 			return err
 		}
-		defer closeResource(rows)
+		defer s.closeResource(rows)
 		bookData, err := scanBookData(rows)
 		if err != nil {
 			return err
@@ -134,7 +136,7 @@ func (s PostgresStore) Add(ctx context.Context, parsedData ParsedData) (int64, e
 		if err != nil {
 			return err
 		}
-		defer closeResource(insertStmt)
+		defer s.closeResource(insertStmt)
 
 		isbn10, isbn13, asin := getBookIdentifiers(parsedData)
 		bookIDRow := insertStmt.QueryRowContext(txCtx, parsedData.Title, getNullableString(parsedData.Subtitle),
@@ -158,6 +160,7 @@ func (s PostgresStore) Add(ctx context.Context, parsedData ParsedData) (int64, e
 	if err != nil {
 		return 0, err
 	}
+	s.logger.Printf("[INFO] - Stored book ID: %d", bookID)
 
 	return bookID, nil
 }
@@ -184,7 +187,7 @@ func (s PostgresStore) Update(ctx context.Context, existingData *StoredData, par
 		if err != nil {
 			return err
 		}
-		defer closeResource(updateStmt)
+		defer s.closeResource(updateStmt)
 
 		isbn10, isbn13, asin := getBookIdentifiers(*parsedData)
 		_, bookUpdateErr := updateStmt.ExecContext(txCtx, parsedData.Title, parsedData.Subtitle,
@@ -207,6 +210,7 @@ func (s PostgresStore) Update(ctx context.Context, existingData *StoredData, par
 	if err != nil {
 		return err
 	}
+	s.logger.Printf("[INFO] - Updated book ID: %d", existingData.ID)
 
 	return nil
 }
@@ -313,9 +317,9 @@ func getNullableString(val string) sql.NullString {
 	return nullString
 }
 
-func closeResource(rows io.Closer) {
+func (s PostgresStore) closeResource(rows io.Closer) {
 	err := rows.Close()
 	if err != nil {
-		log.Printf("[ERROR] - %v", err)
+		s.logger.Printf("[ERROR] - %v", err)
 	}
 }

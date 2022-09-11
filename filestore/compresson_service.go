@@ -15,10 +15,14 @@ const (
 	compressionLevel  = flate.BestCompression
 )
 
-type CompressionService struct{}
+type CompressionService struct {
+	logger *log.Logger
+}
 
-func NewCompressionService() CompressionService {
-	return CompressionService{}
+func NewCompressionService(logger *log.Logger) CompressionService {
+	return CompressionService{
+		logger: logger,
+	}
 }
 
 // CompressBookFiles creates a compressed archive with files from the 'filesFolder'
@@ -26,7 +30,7 @@ func NewCompressionService() CompressionService {
 func (cs CompressionService) CompressBookFiles(filesFolder, archiveOutputFolder, archiveFileName string) (string, []string, error) {
 
 	// TODO: recursively handle folders
-	fileNames, err := getFilesForCompression(filesFolder)
+	fileNames, err := cs.getFilesForCompression(filesFolder)
 	if err != nil {
 		return "", nil, err
 	}
@@ -39,9 +43,9 @@ func (cs CompressionService) CompressBookFiles(filesFolder, archiveOutputFolder,
 	if err != nil {
 		return "", nil, err
 	}
-	defer closeResource(zipArchive)
+	defer cs.closeResource(zipArchive)
 
-	err = compressZip(zipArchive, filesFolder, fileNames)
+	err = cs.compressZip(zipArchive, filesFolder, fileNames)
 	if err != nil {
 		return "", nil, err
 	}
@@ -59,10 +63,10 @@ func (cs CompressionService) ExtractZipFile(zipFilePath string, pathToExtract st
 
 	for _, f := range zipReader.File {
 		outputPath := filepath.Join(pathToExtract, f.Name)
-		//log.Println("unzipping file ", outputPath)
+		cs.logger.Printf("unzipping file: %q", outputPath)
 
 		if f.FileInfo().IsDir() {
-			//log.Println("creating directory...")
+			cs.logger.Printf("creating directory: %q", pathToExtract)
 			err := os.MkdirAll(pathToExtract, os.ModePerm)
 			if err != nil {
 				return err
@@ -118,7 +122,7 @@ func (cs CompressionService) ExtractZipFile(zipFilePath string, pathToExtract st
 }
 
 // getFilesForCompression returns a list of files to be compressed from a particular directory.
-func getFilesForCompression(fileDir string) ([]string, error) {
+func (cs CompressionService) getFilesForCompression(fileDir string) ([]string, error) {
 	dirEntries, err := os.ReadDir(fileDir)
 	if err != nil {
 		return nil, err
@@ -131,16 +135,16 @@ func getFilesForCompression(fileDir string) ([]string, error) {
 }
 
 // compressZip compresses file list into a zip archive.
-func compressZip(archive *os.File, filesFolder string, fileNames []string) error {
+func (cs CompressionService) compressZip(archive *os.File, filesFolder string, fileNames []string) error {
 	zipWriter := zip.NewWriter(archive)
 	// Register a custom Deflate compressor.
 	zipWriter.RegisterCompressor(compressionMethod, func(out io.Writer) (io.WriteCloser, error) {
 		return flate.NewWriter(out, compressionLevel)
 	})
-	defer closeResource(zipWriter)
+	defer cs.closeResource(zipWriter)
 
 	for _, fileName := range fileNames {
-		err := addFileToZip(zipWriter, filepath.Join(filesFolder, fileName), fileName)
+		err := cs.addFileToZip(zipWriter, filepath.Join(filesFolder, fileName), fileName)
 		if err != nil {
 			return err
 		}
@@ -150,12 +154,12 @@ func compressZip(archive *os.File, filesFolder string, fileNames []string) error
 }
 
 // addFileToZip adds a single file to a zip archive
-func addFileToZip(zipWriter *zip.Writer, path, fileName string) error {
+func (cs CompressionService) addFileToZip(zipWriter *zip.Writer, path, fileName string) error {
 	fileToZip, err := os.Open(path)
 	if err != nil {
 		return err
 	}
-	defer closeResource(fileToZip)
+	defer cs.closeResource(fileToZip)
 
 	info, err := fileToZip.Stat()
 	if err != nil {
@@ -182,9 +186,9 @@ func addFileToZip(zipWriter *zip.Writer, path, fileName string) error {
 	return nil
 }
 
-func closeResource(f io.Closer) {
+func (cs CompressionService) closeResource(f io.Closer) {
 	err := f.Close()
 	if err != nil {
-		log.Fatal(err.Error())
+		cs.logger.Fatal(err.Error())
 	}
 }

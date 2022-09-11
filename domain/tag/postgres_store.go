@@ -11,11 +11,15 @@ import (
 )
 
 type PostgresStore struct {
-	db *sql.DB
+	db     *sql.DB
+	logger *log.Logger
 }
 
-func NewPostgresStore(db *sql.DB) PostgresStore {
-	return PostgresStore{db: db}
+func NewPostgresStore(db *sql.DB, logger *log.Logger) PostgresStore {
+	return PostgresStore{
+		db:     db,
+		logger: logger,
+	}
 }
 
 // UpsertAll adds new tags from the input slice, existing tags are ignored.
@@ -33,13 +37,13 @@ func (s PostgresStore) UpsertAll(ctx context.Context, tags []string) ([]int64, e
 		if err != nil {
 			return err
 		}
-		defer closeResource(selectStmt)
+		defer s.closeResource(selectStmt)
 
 		rows, err := selectStmt.QueryContext(txCtx, pq.Array(tags))
 		if err != nil {
 			return err
 		}
-		defer closeResource(rows)
+		defer s.closeResource(rows)
 
 		for rows.Next() {
 			var ID int64
@@ -55,7 +59,7 @@ func (s PostgresStore) UpsertAll(ctx context.Context, tags []string) ([]int64, e
 		if err != nil {
 			return err
 		}
-		defer closeResource(insertStmt)
+		defer s.closeResource(insertStmt)
 
 		for _, tag := range tags {
 			if existingID, ok := existingTags[tag]; ok {
@@ -75,7 +79,7 @@ func (s PostgresStore) UpsertAll(ctx context.Context, tags []string) ([]int64, e
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("[INFO] - Stored tag IDs: %d", ret)
+	s.logger.Printf("[INFO] - Stored tag IDs: %d", ret)
 
 	return ret, nil
 }
@@ -92,7 +96,7 @@ func (s PostgresStore) ReplaceBookTags(ctx context.Context, bookID int64, tagIDs
 		if err != nil {
 			return err
 		}
-		defer closeResource(deleteStmt)
+		defer s.closeResource(deleteStmt)
 
 		_, err = deleteStmt.ExecContext(txCtx, bookID)
 		if err != nil {
@@ -103,7 +107,7 @@ func (s PostgresStore) ReplaceBookTags(ctx context.Context, bookID int64, tagIDs
 		if err != nil {
 			return err
 		}
-		defer closeResource(insertStmt)
+		defer s.closeResource(insertStmt)
 
 		for _, tagID := range tagIDs {
 			_, err := insertStmt.ExecContext(txCtx, bookID, tagID)
@@ -116,9 +120,9 @@ func (s PostgresStore) ReplaceBookTags(ctx context.Context, bookID int64, tagIDs
 	})
 }
 
-func closeResource(rows io.Closer) {
+func (s PostgresStore) closeResource(rows io.Closer) {
 	err := rows.Close()
 	if err != nil {
-		log.Printf("[ERROR] - %v", err)
+		s.logger.Printf("[ERROR] - %v", err)
 	}
 }
