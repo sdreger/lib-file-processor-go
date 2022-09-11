@@ -16,7 +16,7 @@ services:
       - "9000:9000"
       - "9001:9001"
     volumes:
-      - minio:/data
+      - ./minio:/data
     command:
       - server
       - /data
@@ -34,7 +34,8 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres14:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/db.sql
+      - ./postgres14:/var/lib/postgresql/data
     restart: unless-stopped
 
   adminer:

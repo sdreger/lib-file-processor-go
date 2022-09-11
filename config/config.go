@@ -20,7 +20,7 @@ const (
 	defaultDBName     = "sandbox"
 	defaultDBSchema   = "ebook"
 
-	defaultMinioEndpoint        = "localhost:9000"
+	defaultMinioEndpoint        = "127.0.0.1:9000"
 	defaultMinioAccessKeyID     = "AKIAIOSFODNN7EXAMPLE"
 	defaultMinioSecretAccessKey = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
 	defaultMinioUseSSL          = false
@@ -134,7 +134,6 @@ func GetAppConfig() AppConfig {
 }
 
 func getDBConnectionString(DBHost, DBUser, DBPassword, DBName, DBSchema string) string {
-	// "postgres://postgres:postgres@localhost/sandbox?sslmode=disable&search_path=ebook"
 	return fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable&search_path=%s",
 		DBUser, DBPassword, DBHost, DBName, DBSchema)
 }
