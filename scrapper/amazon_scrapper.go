@@ -84,6 +84,17 @@ func initCallbacks(collector *colly.Collector, scrappedRawData *scrappedRawData,
 
 	collector.OnRequest(func(request *colly.Request) {
 		logger.Printf("[INFO] - Visiting: %q, using 'User-Agent': %q", request.URL, request.Headers.Get("User-Agent"))
+		request.Headers.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9")
+		request.Headers.Set("Accept-Encoding", "gzip, deflate, br")
+		request.Headers.Set("Accept-Language", "en-US,en;q=0.9,ru;q=0.8,uk;q=0.7")
+		request.Headers.Set("Cache-Control", "max-age=0")
+		request.Headers.Set("Device-Memory", "8")
+		request.Headers.Set("Downlink", "10")
+		request.Headers.Set("Dpr", "1")
+		request.Headers.Set("Ect", "4g")
+		request.Headers.Set("Rtt", "50")
+		request.Headers.Set("Upgrade-Insecure-Requests", "1")
+		request.Headers.Set("Viewport-Width", "1920")
 	})
 
 	collector.OnHTML(bookTitleSelector, func(element *colly.HTMLElement) {

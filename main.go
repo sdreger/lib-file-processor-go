@@ -37,6 +37,7 @@ func main() {
 		logDestination = os.Stdout
 	}
 	logger = log.New(logDestination, "", log.Ldate|log.Ltime|log.Lshortfile)
+	defer logger.Printf("[INFO] ---------- Shutting down ----------")
 
 	// Try to connect to database
 	db, err := connectToDB(appConfig.DBConnectionString)
