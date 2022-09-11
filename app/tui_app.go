@@ -110,6 +110,10 @@ func (t *TuiApp) bookIDInputHandler(key tcell.Key) {
 	if key != tcell.KeyEnter {
 		return
 	}
+	if len(t.bookIDString) != 10 {
+		t.appendFooterText(fmt.Sprintf("The book ID must be of size 10: %q", t.bookIDString))
+		return
+	}
 	parsedData, existingData, tempFilesData := t.PrepareBook(t.bookIDString)
 	t.parsedData = parsedData
 	t.existingData = existingData
