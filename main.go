@@ -52,7 +52,7 @@ func main() {
 	minioStore, minioStoreErr := filestore.NewMinioStore(appConfig.MinioEndpoint, appConfig.MinioAccessKeyID,
 		appConfig.MinioSecretAccessKey, appConfig.MinioUseSSL, logger)
 	if minioStoreErr != nil {
-		logger.Printf("[WARN] - Can not connect to Minio store: %v", err)
+		logger.Printf("[WARN] - Can not connect to Minio store: %v", minioStoreErr)
 	} else {
 		appConfig.BlobStoreAvailable = true
 	}
@@ -68,16 +68,6 @@ func main() {
 	if err := watcher.Watch(); err != nil {
 		logger.Printf("[WARN] - Can not startt watching filesystem changes: %v", err)
 	}
-
-	// Uncomment the section below to use the app in CLI mode instead of TUI
-	/*
-		// Init and run the CLI application
-		cliApp, cliErr := app.NewCliApp(appConfig, db, minioStore, logger)
-		if cliErr != nil {
-			logger.Fatalf("CLI app init error: %v", cliErr)
-		}
-		cliApp.Run()
-	*/
 
 	// Init and run the TUI application
 	tuiApp, tuiErr := app.NewTuiApp(appConfig, db, minioStore, logger, watcher.BookIDChan)
