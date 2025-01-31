@@ -32,6 +32,10 @@ var (
 	pubRegexp05 = regexp.MustCompile(`(^[A-Z][^(;]+) \((\d+ \w+\.? \d+)\)`)
 	// Esri Press; Fourth edition (10 Feb. 2022) / Esri Press; Fourth Bilingual edition (10 Feb. 2022)
 	pubRegexp06 = regexp.MustCompile(`(?i)(^[A-Z][^(;]+); ([a-z-A-Z]+(st|nd|rd|th)) ?\w* edition \((\d+ \w+\.? \d+)\)`)
+	// Springer; 2nd ed. 2023 edition
+	pubRegexp07 = regexp.MustCompile(`(^[A-Z][^;]+); ((\d+)(st|nd|rd|th))? (ed\. \d+ edition)$`)
+	// Packt Publishing
+	pubRegexp08 = regexp.MustCompile(`(^[A-Z][^(;]+)$`)
 	// 522 pages
 	lengthRegex = regexp.MustCompile(`(^\d+) pages`)
 )
@@ -134,18 +138,42 @@ func ParsePublisherString(publisherString string) (BookPublishMeta, error) {
 		dateString = subMatch[4]
 	}
 
+	// US format 4
+	subMatch = pubRegexp07.FindStringSubmatch(publisherString)
+	if len(subMatch) == 6 {
+		publisher = subMatch[1]
+		if subMatch[2] != "" {
+			ed, err := strconv.Atoi(subMatch[3])
+			if err == nil {
+				edition = ed
+			}
+		}
+	}
+
+	// Plain format
+	subMatch = pubRegexp08.FindStringSubmatch(publisherString)
+	if len(subMatch) == 2 {
+		publisher = subMatch[1]
+	}
+
 	if publisher == "" {
 		return BookPublishMeta{}, fmt.Errorf("the publisher string '%s' can not be parsed", publisherString)
 	}
 
+	publisher = strings.TrimSpace(publisher)
+	editionNumber := uint8(edition)
+
 	date, err := ParseDateString(dateString)
 	if err != nil {
-		return BookPublishMeta{}, fmt.Errorf("can not get publication date: %w", err)
+		return BookPublishMeta{
+			Publisher: publisher,
+			Edition:   editionNumber,
+		}, fmt.Errorf("can not get publication date: %w", err)
 	}
 
 	return BookPublishMeta{
-		Publisher: strings.TrimSpace(publisher),
-		Edition:   uint8(edition),
+		Publisher: publisher,
+		Edition:   editionNumber,
 		PubDate:   date,
 	}, nil
 }

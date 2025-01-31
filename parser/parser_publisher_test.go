@@ -108,8 +108,27 @@ func TestParsePublisherString(t *testing.T) {
 			},
 		},
 		{
-			input:             "Unknown; 2nd edition (Unknown 15, 2021)",
-			meta:              BookPublishMeta{},
+			input: "Springer; 2nd ed. 2023 edition",
+			meta: BookPublishMeta{
+				Publisher: "Springer",
+				Edition:   2,
+			},
+			shouldReturnError: true,
+		},
+		{
+			input: "Packt Publishing",
+			meta: BookPublishMeta{
+				Publisher: "Packt Publishing",
+				Edition:   1,
+			},
+			shouldReturnError: true,
+		},
+		{
+			input: "Unknown; 2nd edition (Unknown 15, 2021)",
+			meta: BookPublishMeta{
+				Publisher: "Unknown",
+				Edition:   2,
+			},
 			shouldReturnError: true,
 		},
 		{
