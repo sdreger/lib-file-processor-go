@@ -15,9 +15,11 @@ import (
 
 const (
 	defaultBasePath = "https://www.amazon.com/dp/"
+	//defaultBasePath = "https://www.amazon.co.uk/dp/"
 
 	//userAgentSafari = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.3 Safari/605.1.15"
-	userAgentEdge = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.134 Safari/537.36 Edg/103.0.1264.77"
+	//userAgentEdge = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36 Edg/106.0.1370.52"
+	userAgentFirefox = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0"
 
 	publisherKey         = "Publisher"
 	editionKey           = "Edition"
@@ -41,7 +43,7 @@ const (
 	bookDetailsSelector     = `div[id=detailBullets_feature_div]>ul>li`
 	bookCarouserSelector    = `li.rpi-carousel-attribute-card>div.rpi-attribute-content`
 	bookISBNBlockSelector   = `div[id=isbn_feature_div]>div.a-section>div.a-row, div[id=printEditionIsbn_feature_div]>div.a-section>div.a-row`
-	bookCoverURLSelector    = `img[id=imgBlkFront], img[id=ebooksImgBlkFront]`
+	bookCoverURLSelector    = `img[id=imgBlkFront], img[id=ebooksImgBlkFront], img[id=landingImage]`
 )
 
 type AmazonScrapper struct {
@@ -65,7 +67,7 @@ func NewAmazonScrapper(basePath string, logger *log.Logger) (*AmazonScrapper, er
 	collector := colly.NewCollector()
 	collector.AllowURLRevisit = true
 	//extensions.RandomUserAgent(collector)
-	collector.UserAgent = userAgentEdge
+	collector.UserAgent = userAgentFirefox
 	collector.SetCookieJar(cookieJar)
 
 	scrappedRawData := newScrappedRawData()
@@ -84,17 +86,17 @@ func initCallbacks(collector *colly.Collector, scrappedRawData *scrappedRawData,
 
 	collector.OnRequest(func(request *colly.Request) {
 		logger.Printf("[INFO] - Visiting: %q, using 'User-Agent': %q", request.URL, request.Headers.Get("User-Agent"))
-		request.Headers.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9")
+		request.Headers.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
 		request.Headers.Set("Accept-Encoding", "gzip, deflate, br")
-		request.Headers.Set("Accept-Language", "en-US,en;q=0.9,ru;q=0.8,uk;q=0.7")
-		request.Headers.Set("Cache-Control", "max-age=0")
-		request.Headers.Set("Device-Memory", "8")
-		request.Headers.Set("Downlink", "10")
-		request.Headers.Set("Dpr", "1")
-		request.Headers.Set("Ect", "4g")
-		request.Headers.Set("Rtt", "50")
+		request.Headers.Set("Accept-Language", "en-US,en;q=0.5")
+		request.Headers.Set("Connection", "keep-alive")
+		request.Headers.Set("Host", "www.amazon.com")
+		request.Headers.Set("Sec-Fetch-Dest", "document")
+		request.Headers.Set("Sec-Fetch-Mode", "navigate")
+		request.Headers.Set("Sec-Fetch-Site", "none")
+		request.Headers.Set("Sec-Fetch-User", "?1")
+		request.Headers.Set("TE", "trailers")
 		request.Headers.Set("Upgrade-Insecure-Requests", "1")
-		request.Headers.Set("Viewport-Width", "1920")
 	})
 
 	collector.OnHTML(bookTitleSelector, func(element *colly.HTMLElement) {
@@ -199,7 +201,16 @@ func (s *AmazonScrapper) GetBookData(bookID string) (book.ParsedData, error) {
 		s.logger.Printf("[WARN] - %v", err)
 	}
 
+	if publishMeta.PubDate.IsZero() {
+		pubDate, err := parser.ParseDateString(detailsBlock[pubDateKey])
+		if err != nil {
+			s.logger.Printf("[WARN] - %v", err)
+		}
+		publishMeta.PubDate = pubDate
+	}
+
 	// -------------------- Book ISBN10 --------------------
+	s.logger.Printf("ISBN10String: %s; ISBN10Key: %s; sourceISBNKey: %s", ISBN10String, detailsBlock[ISBN10Key], detailsBlock[sourceISBNKey])
 	isbn10 := getISBN10(ISBN10String, detailsBlock[ISBN10Key], detailsBlock[sourceISBNKey])
 
 	// -------------------- Book ISBN13 --------------------
@@ -265,13 +276,18 @@ func enrichWithOptionalCarouselData(parsedData *book.ParsedData, detailsCarousel
 
 func getBookEdition(titleString, subtitleString string, publisherEdition uint8) uint8 {
 	titleEdition, err := parser.ParseEditionString(titleString)
-	if err == nil && titleEdition > 0 {
+	if err == nil && titleEdition > 0 && titleEdition < 200 {
 		return titleEdition
 	}
 
 	subtitleEdition, err := parser.ParseEditionString(subtitleString)
-	if err == nil && subtitleEdition > 0 {
+	if err == nil && subtitleEdition > 0 && subtitleEdition < 200 {
 		return subtitleEdition
+	}
+
+	// Springer specific error
+	if publisherEdition > 200 {
+		publisherEdition = 1
 	}
 
 	return publisherEdition
