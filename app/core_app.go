@@ -141,11 +141,12 @@ func (c *core) getBookID() string {
 
 func (c *core) findExistingBook(ctx context.Context, parsedData book.ParsedData) (*book.StoredData, error) {
 	existingData, err := c.BookDBStore.Find(ctx, book.SearchRequest{
-		Title:   parsedData.Title,
-		Edition: parsedData.Edition,
-		ISBN10:  parsedData.ISBN10,
-		ISBN13:  parsedData.ISBN13,
-		ASIN:    parsedData.ASIN,
+		Title:     parsedData.Title,
+		Edition:   parsedData.Edition,
+		ISBN10:    parsedData.ISBN10,
+		ISBN13:    parsedData.ISBN13,
+		ASIN:      parsedData.ASIN,
+		Publisher: parsedData.Publisher,
 	})
 	if err != nil {
 		return nil, err

@@ -33,7 +33,7 @@ const (
 			LEFT JOIN ebook.file_types ft on ft.id = bft.file_type_id
 			LEFT JOIN ebook.book_tag bt on books.id = bt.book_id
 			LEFT JOIN ebook.tags t on t.id = bt.tag_id
-		WHERE \(books.title = \$1 AND books.edition = \$2\) 
+		WHERE \(books.title = \$1 AND books.edition = \$2 AND pub.name = \$6\) 
 			OR \(books.isbn10 IS NOT NULL AND books.isbn10 = \$3\) 
 			OR \(books.isbn13 IS NOT NULL AND books.isbn13 = \$4\)
 			OR \(books.asin IS NOT NULL AND books.asin = \$5\)`
@@ -81,16 +81,18 @@ func TestPostgresStore_Find(t *testing.T) {
 
 	mock.ExpectBegin()
 	selectStmt := mock.ExpectPrepare(findBookQuery).WillBeClosed()
-	selectStmt.ExpectQuery().WithArgs(testBookTitle, testBookEdition, testBookISBN10, testBookISBN13, testBookASIN).
+	selectStmt.ExpectQuery().
+		WithArgs(testBookTitle, testBookEdition, testBookISBN10, testBookISBN13, testBookASIN, testBookPublisher).
 		WillReturnRows(result).RowsWillBeClosed()
 	mock.ExpectCommit()
 
 	storedData, err := store.Find(context.Background(), SearchRequest{
-		Title:   testBookTitle,
-		Edition: testBookEdition,
-		ISBN10:  testBookISBN10,
-		ISBN13:  testBookISBN13,
-		ASIN:    testBookASIN,
+		Title:     testBookTitle,
+		Edition:   testBookEdition,
+		ISBN10:    testBookISBN10,
+		ISBN13:    testBookISBN13,
+		ASIN:      testBookASIN,
+		Publisher: testBookPublisher,
 	})
 
 	if err != nil {

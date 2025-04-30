@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	bookFileFormatRegex      = regexp.MustCompile(`[\s]|[:] |[,] | ?[()] ?| ?[\[\]] ?|[/]`)
+	bookFileFormatRegex      = regexp.MustCompile(`[\s]|[:] |[,] | ?[()] ?| ?[\[\]] ?|[/]|[|]`)
 	utf8CleanupRegex         = regexp.MustCompile(`[^#\-().,\p{L}\p{N}\p{Z}\p{Sm}\p{Sc}\p{Sk}\p{Pi}\p{Pf}\p{Pc}\p{Mc}]`)
 	bookFileNameCleanupRegex = regexp.MustCompile(`[´’]`)
 	multiDotCleanupRegex     = regexp.MustCompile(`\.{2,}`)
@@ -131,11 +131,12 @@ type relationKeys struct {
 }
 
 type SearchRequest struct {
-	Title   string
-	Edition uint8
-	ISBN10  string
-	ISBN13  int64
-	ASIN    string
+	Title     string
+	Edition   uint8
+	ISBN10    string
+	ISBN13    int64
+	ASIN      string
+	Publisher string
 }
 
 type StoredData struct {

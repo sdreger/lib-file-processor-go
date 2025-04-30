@@ -60,7 +60,7 @@ func (s PostgresStore) Find(ctx context.Context, req SearchRequest) (*StoredData
 			LEFT JOIN ebook.file_types ft on ft.id = bft.file_type_id
 			LEFT JOIN ebook.book_tag bt on books.id = bt.book_id
 			LEFT JOIN ebook.tags t on t.id = bt.tag_id
-		WHERE (books.title = $1 AND books.edition = $2) 
+		WHERE (books.title = $1 AND books.edition = $2 AND pub.name = $6) 
 			OR (books.isbn10 IS NOT NULL AND books.isbn10 = $3) 
 			OR (books.isbn13 IS NOT NULL AND books.isbn13 = $4)
 			OR (books.asin IS NOT NULL AND books.asin = $5)`
@@ -70,7 +70,7 @@ func (s PostgresStore) Find(ctx context.Context, req SearchRequest) (*StoredData
 		}
 		defer s.closeResource(selectStmt)
 
-		rows, err := selectStmt.QueryContext(txCtx, req.Title, req.Edition, req.ISBN10, req.ISBN13, req.ASIN)
+		rows, err := selectStmt.QueryContext(txCtx, req.Title, req.Edition, req.ISBN10, req.ISBN13, req.ASIN, req.Publisher)
 		if err != nil {
 			return err
 		}
