@@ -7,7 +7,8 @@ func TestMapPublisherName(t *testing.T) {
 		input  string
 		output string
 	}{
-		{input: "ACM Books", output: "MaC"},
+		{input: "ACM Books", output: "ACM"},
+		{input: "Association for Computing Machinery", output: "ACM"},
 		{input: "Alpha Science International (Alpha Science)", output: "Alpha"},
 		{input: "Amer Radio Relay League", output: "ARRL"},
 		{input: "Academic Press", output: "AP"},
