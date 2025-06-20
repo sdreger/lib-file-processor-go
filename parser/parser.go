@@ -75,7 +75,7 @@ func ParseTitleString(titleString string) (string, string) {
 // ParsePublisherString parses a book publisher string and returns publisher-related meta information.
 func ParsePublisherString(publisherString string) (BookPublishMeta, error) {
 	var publisher string
-	var edition = 1
+	var edition = 0
 	var dateString string
 
 	// US format 1
@@ -180,6 +180,10 @@ func ParsePublisherString(publisherString string) (BookPublishMeta, error) {
 
 // ParseEditionString parses a book edition string and returns its numeric value.
 func ParseEditionString(editionString string) (uint8, error) {
+	// For the cases like: 2nd ed.
+	if strings.Contains(editionString, " ed.") {
+		editionString = strings.Replace(editionString, " ed.", "", 1)
+	}
 	// Try to parse cardinal value like '2nd Edition'
 	cardinalEditionSubMatch := editionCardinalRegex.FindStringSubmatch(editionString)
 	if cardinalEditionSubMatch != nil {

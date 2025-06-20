@@ -39,6 +39,10 @@ func TestParseEditionString(t *testing.T) {
 			edition: 2,
 		},
 		{
+			input:   "2nd ed. Edition",
+			edition: 2,
+		},
+		{
 			input:             "Unknown Edition",
 			edition:           0,
 			shouldReturnError: true,
